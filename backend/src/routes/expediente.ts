@@ -3,8 +3,10 @@ import path from 'path';
 import fs from 'fs';
 import { db } from '../db/database.js';
 import { authMiddleware, AuthRequest } from '../middleware/auth.js';
-import { VALID_SLOTS } from './documentos.js';
+import { VALID_SLOTS, getStorageDir } from './documentos.js';
 import { consolidateAndFolioExpediente, DocumentToConsolidate } from '../utils/pdfConsolidator.js';
+import { encryptBuffer, decryptBuffer } from '../utils/encryption.js';
+import { logAudit } from '../utils/auditLogger.js';
 
 export const expedienteRouter = Router();
 
@@ -73,18 +75,25 @@ expedienteRouter.post('/finalizar', authMiddleware, async (req: AuthRequest, res
         });
 
         const docsToConsolidate: DocumentToConsolidate[] = [];
+        const storageBase = getStorageDir();
 
         for (const slotKey of VALID_SLOTS) {
           if (docMap[slotKey]) {
             const docRecord = docMap[slotKey];
             const relativePath = docRecord.archivo_url;
-            const fullPath = path.resolve(__dirname, '../../', relativePath.replace(/^\//, ''));
+            
+            // Resolver ruta en storage
+            const filename = path.basename(relativePath);
+            const userSubdir = `postulante_${postulanteId}`;
+            const fullPath = path.join(storageBase, userSubdir, filename);
 
             if (fs.existsSync(fullPath)) {
-              const fileBuffer = fs.readFileSync(fullPath);
+              const encryptedFileBuffer = fs.readFileSync(fullPath);
+              // Descifrar buffer para el consolidador pdf-lib
+              const plainBuffer = decryptBuffer(encryptedFileBuffer);
               docsToConsolidate.push({
                 slot: slotKey,
-                buffer: fileBuffer,
+                buffer: plainBuffer,
                 nombreOriginal: docRecord.nombre_original,
               });
             }
@@ -100,8 +109,8 @@ expedienteRouter.post('/finalizar', authMiddleware, async (req: AuthRequest, res
         try {
           const result = await consolidateAndFolioExpediente(docsToConsolidate);
 
-          // Guardar el PDF consolidado en el disco local
-          const userDir = path.resolve(__dirname, `../../uploads/postulante_${postulanteId}`);
+          // Guardar el PDF consolidado en el disco local CIFRADO EN REPOSO
+          const userDir = path.join(storageBase, `postulante_${postulanteId}`);
           if (!fs.existsSync(userDir)) {
             fs.mkdirSync(userDir, { recursive: true });
           }
@@ -109,14 +118,17 @@ expedienteRouter.post('/finalizar', authMiddleware, async (req: AuthRequest, res
           const consolidatedFilename = `expediente_consolidado_${Date.now()}.pdf`;
           const targetPath = path.join(userDir, consolidatedFilename);
 
-          fs.writeFileSync(targetPath, result.pdfBuffer);
+          const encryptedConsolidated = encryptBuffer(result.pdfBuffer);
+          fs.writeFileSync(targetPath, encryptedConsolidated);
 
           const pdfUrl = `/uploads/postulante_${postulanteId}/${consolidatedFilename}`;
 
-          // Captura de Auditoría de la Declaración Jurada Digital
+          // Captura de Auditoría de la Declaración Jurada Digital y Finalización
           const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
           const clientIp = Array.isArray(rawIp) ? rawIp[0] : String(rawIp);
           const fechaHoraActual = new Date().toISOString();
+
+          logAudit(req, postulanteId, req.user?.dni, 'FINALIZACION_EXPEDIENTE', `Total Páginas: ${result.totalPaginas}, CVD: ${result.hashCvd.slice(0, 16)}...`);
 
           // Registra en SQLite
           db.run(

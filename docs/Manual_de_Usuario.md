@@ -1,5 +1,5 @@
 # Manual de Usuario — SIRE-CV
-*(Documento vivo: se actualiza al cierre de cada sprint. Versión actual: **Sprint 3 — Panel del Evaluador y Generación de Actas**)*
+*(Documento vivo: se actualiza al cierre de cada sprint. Versión actual: **Sprint 4 — Seguridad, Almacenamiento Institucional y Reportería**)*
 
 ## 1. ¿Qué es SIRE-CV?
 Sistema para presentar tu Currículum Vitae documentado de forma digital, respetando el mismo orden y checklist (A–H) del comunicado oficial, sin necesidad de folder manila, firma física ni traslado presencial.
@@ -66,8 +66,37 @@ El personal encargado de la recepción y verificación documental dispone de un 
    - El sistema registrará el resultado en la base de datos y generará el PDF del **Acta Oficial de Evaluación Documental** firmado digitalmente con el código CVD del expediente y los datos del evaluador.
    - Haga clic en **"Descargar Acta de Evaluación (.pdf)"** para archivar o imprimir el documento.
 
-## 8. Preguntas frecuentes
+## 8. Módulo de Reportería e Impacto Ambiental para el INEI
+En el menú superior del Evaluador/Administrador, haga clic en la pestaña **"Reportería & INEI"**:
+1. **Cuadro Cuantitativo de Postulantes**:
+   - Muestra tarjetas en tiempo real con el total de postulantes registrados, expedientes finalizados, pendientes de evaluación, aptos y no aptos.
+2. **Exportación de Reportes**:
+   - **Boton "Exportar Excel (.xlsx)"**: Descarga una hoja de cálculo profesional con el detalle de postulantes, estados, dictámenes y folios.
+   - **Boton "Exportar PDF (.pdf)"**: Descarga un informe institucional formateado en A4 listo para presentación.
+3. **Bloque de Impacto Ambiental & Ecoeficiencia (Argumento INEI)**:
+   - Simula y cuantifica el impacto del reemplazo del papel físico:
+     - **Hojas de Papel A4 Ahorradas**.
+     - **Traslados Presenciales Evitados**.
+     - **Ahorro Económico Estimado en Soles (S/.)**.
+     - **Emisiones de CO2 Evitadas (kg)**.
+   - Permite ajustar dinámicamente los parámetros de *Hojas promedio por expediente* y *Costo de traslado promedio (S/.)* para demostraciones en tiempo real.
+
+## 9. Seguridad, Almacenamiento Institucional y Backup
+1. **Cumplimiento de la Ley N.º 29733 (Sin Nube Pública)**:
+   - Ningún documento se transmite a nubes públicas. Todos los PDFs residen en el disco local del servidor institucional (`STORAGE_PATH`).
+2. **Cifrado en Reposo (AES-256-CBC)**:
+   - Los archivos en disco se almacenan cifrados con clave secreta administrada por variable de entorno `ENCRYPTION_KEY`.
+3. **Log de Auditoría Estricta**:
+   - Cada intento de login, registro, carga de archivo, descarga o emisión de acta queda registrado en la tabla `log_auditoria` con IP, fecha/hora y DNI.
+4. **Copias de Seguridad (Backups)**:
+   - Para ejecutar un backup manual o programar en cron:
+     ```bash
+     cd backend
+     npm run backup
+     ```
+
+## 10. Preguntas frecuentes
 - **¿Quién puede descargar el Acta de Evaluación en PDF?**
   *Tanto el Evaluador como el propio Postulante pueden descargar y verificar su Acta de Evaluación desde el sistema una vez emitido el dictamen.*
-- **¿Qué sucede si se re-evalúa un expediente?**
-  *El evaluador puede actualizar la calificación de los rubros en cualquier momento; al guardar los cambios, se emitirá una versión actualizada del Acta PDF.*
+- **¿Dónde se guardan los archivos subidos?**
+  *Se almacenan en disco local en la carpeta configurable `STORAGE_PATH`, cifrados con AES-256 en reposo, garantizando el cumplimiento de la Ley 29733.*

@@ -95,10 +95,7 @@ declaración jurada" y push.
 ## Sprint 3 — Panel del evaluador (E5)
 **Objetivo:** quien recepciona ve el expediente ya ordenado y foliado, marca cumple/no cumple por rubro contra el perfil de Operador Tecnológico, y el sistema genera el acta.
 
----
-
-## Sprint 4 — Seguridad, almacenamiento institucional y reportería (E6 + E7)
-**Objetivo:** despliegue en servidor local/institucional (no nube pública), cifrado en reposo, backups, y tablero con ahorro estimado de papel/traslados para el argumento ante el INEI.
+--- [x] **Sprint 4 — Seguridad, almacenamiento institucional y reportería (E6 + E7)**: Cifrado en reposo AES-256 en disco local (cumplimiento Ley 29733 sin nube pública), job de backup diario (`npm run backup`), rate limiting en autenticación/uploads, tabla `log_auditoria`, endpoints de reportería cuantitativa y exportación (XLSX/PDF), y tablero de **Ahorro de Papel, Traslados y CO2 para el INEI**.
 
 ---
 

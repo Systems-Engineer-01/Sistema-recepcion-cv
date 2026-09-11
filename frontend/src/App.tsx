@@ -3,15 +3,16 @@ import { Auth } from './components/Auth';
 import { Expediente } from './components/Expediente';
 import { EvaluadorBandeja } from './components/EvaluadorBandeja';
 import { EvaluadorDetalle } from './components/EvaluadorDetalle';
+import { Reporteria } from './components/Reporteria';
 import { api, getToken, removeToken, User } from './services/api';
-import { LogOut, UserCheck } from 'lucide-react';
-
+import { LogOut, UserCheck, Inbox, BarChart3 } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // State for Evaluator navigation
+  // Evaluator Navigation State
+  const [activeTab, setActiveTab] = useState<'bandeja' | 'reportes'>('bandeja');
   const [selectedExpedienteId, setSelectedExpedienteId] = useState<number | null>(null);
 
   const checkAuth = async () => {
@@ -40,6 +41,7 @@ export const App: React.FC = () => {
     removeToken();
     setUser(null);
     setSelectedExpedienteId(null);
+    setActiveTab('bandeja');
   };
 
   if (loading) {
@@ -73,11 +75,46 @@ export const App: React.FC = () => {
             </div>
           </div>
 
+          {/* Navigation Tabs for Evaluator */}
+          {user && isEvaluador && (
+            <div className="flex items-center gap-1 bg-slate-800/60 border border-slate-700/60 p-1 rounded-xl">
+              <button
+                onClick={() => {
+                  setSelectedExpedienteId(null);
+                  setActiveTab('bandeja');
+                }}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === 'bandeja' && !selectedExpedienteId
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                }`}
+              >
+                <Inbox className="w-4 h-4" />
+                <span>Bandeja Evaluador</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setSelectedExpedienteId(null);
+                  setActiveTab('reportes');
+                }}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === 'reportes'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                }`}
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span>Reportería & INEI</span>
+              </button>
+            </div>
+          )}
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div className="header-status">
               <span className="status-dot"></span>
               <span>
-                {isEvaluador ? 'Panel Evaluador — Concurso 2026' : 'Sprint 3 — Panel Evaluador & Actas'}
+                {isEvaluador ? 'Panel Evaluador — Concurso 2026' : 'Postulante — Recepción CV'}
               </span>
             </div>
 
@@ -118,7 +155,9 @@ export const App: React.FC = () => {
         {!user ? (
           <Auth onSuccess={(loggedUser) => setUser(loggedUser)} />
         ) : isEvaluador ? (
-          selectedExpedienteId ? (
+          activeTab === 'reportes' ? (
+            <Reporteria />
+          ) : selectedExpedienteId ? (
             <EvaluadorDetalle
               expedienteId={selectedExpedienteId}
               onBack={() => setSelectedExpedienteId(null)}
@@ -136,7 +175,7 @@ export const App: React.FC = () => {
       {/* Footer */}
       <footer className="app-footer">
         <div>
-          SIRE-CV v0.3.0 &bull; Concurso de Ascenso Magisterial 2026 &bull; Operador Tecnológico
+          SIRE-CV v0.4.0 &bull; Concurso de Ascenso Magisterial 2026 &bull; Almacenamiento Institucional Seguro (Ley N.º 29733)
         </div>
       </footer>
     </div>

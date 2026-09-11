@@ -4,11 +4,22 @@ import path from 'path';
 import fs from 'fs';
 import { db } from '../db/database.js';
 import { authMiddleware, AuthRequest } from '../middleware/auth.js';
+import { uploadRateLimiter } from '../middleware/rateLimiter.js';
 import { validatePdfA4Portrait } from '../utils/pdfValidator.js';
+import { encryptBuffer } from '../utils/encryption.js';
+import { logAudit } from '../utils/auditLogger.js';
 
 export const documentosRouter = Router();
 
-const uploadsBaseDir = path.resolve(__dirname, '../../uploads');
+export function getStorageDir(): string {
+  const customPath = process.env.STORAGE_PATH;
+  if (customPath) {
+    return path.isAbsolute(customPath) ? customPath : path.resolve(process.cwd(), customPath);
+  }
+  return path.resolve(__dirname, '../../uploads');
+}
+
+const uploadsBaseDir = getStorageDir();
 
 if (!fs.existsSync(uploadsBaseDir)) {
   fs.mkdirSync(uploadsBaseDir, { recursive: true });
@@ -63,6 +74,7 @@ documentosRouter.get('/', authMiddleware, (req: AuthRequest, res: Response): voi
 documentosRouter.post(
   '/:slot',
   authMiddleware,
+  uploadRateLimiter,
   (req: AuthRequest, res: Response): void => {
     upload.single('archivo')(req, res, async (err: any) => {
       if (err) {
@@ -90,7 +102,7 @@ documentosRouter.post(
         return;
       }
 
-      // Validar dimensiones y orientación del PDF con pdf-lib
+      // Validar dimensiones y orientación del PDF con pdf-lib (sobre el buffer plano en memoria)
       const pdfValidation = await validatePdfA4Portrait(req.file.buffer);
 
       if (!pdfValidation.isValid) {
@@ -101,9 +113,10 @@ documentosRouter.post(
         return;
       }
 
-      // Guardar el archivo físicamente en el disco local cifrado/seguro
+      // Guardar el archivo físicamente en el disco local CIFRADO EN REPOSO (AES-256)
       try {
-        const userUploadDir = path.join(uploadsBaseDir, `postulante_${postulanteId}`);
+        const storageBase = getStorageDir();
+        const userUploadDir = path.join(storageBase, `postulante_${postulanteId}`);
         if (!fs.existsSync(userUploadDir)) {
           fs.mkdirSync(userUploadDir, { recursive: true });
         }
@@ -111,11 +124,16 @@ documentosRouter.post(
         const safeFilename = `${slotParam}_${Date.now()}.pdf`;
         const targetPath = path.join(userUploadDir, safeFilename);
 
-        fs.writeFileSync(targetPath, req.file.buffer);
+        // Cifrar el buffer antes de escribir en disco
+        const encryptedData = encryptBuffer(req.file.buffer);
+        fs.writeFileSync(targetPath, encryptedData);
 
         const relativeUrl = `/uploads/postulante_${postulanteId}/${safeFilename}`;
         const nombreOriginal = req.file.originalname;
         const tamanoBytes = req.file.size;
+
+        // Registrar auditoría de subida
+        logAudit(req, postulanteId, req.user?.dni, 'SUBIDA_DOCUMENTO', `Slot: ${slotParam}, Archivo: ${nombreOriginal}`);
 
         // Registrar o actualizar (UPSERT) en la base de datos SQLite
         db.run(
@@ -135,7 +153,7 @@ documentosRouter.post(
             }
 
             res.status(200).json({
-              message: `Documento para el slot ${slotParam} subido y verificado correctamente.`,
+              message: `Documento para el slot ${slotParam} subido, cifrado (AES-256) y verificado correctamente.`,
               documento: {
                 id: this.lastID,
                 slot: slotParam,
@@ -155,7 +173,7 @@ documentosRouter.post(
         );
       } catch (fileErr: any) {
         console.error('[File Error] Guardando archivo:', fileErr);
-        res.status(500).json({ error: 'Error al guardar el archivo en el servidor local.' });
+        res.status(500).json({ error: 'Error al guardar el archivo cifrado en el servidor local.' });
       }
     });
   }

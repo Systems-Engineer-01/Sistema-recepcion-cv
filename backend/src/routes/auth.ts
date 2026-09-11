@@ -3,12 +3,14 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { db } from '../db/database.js';
 import { authMiddleware, AuthRequest } from '../middleware/auth.js';
+import { authRateLimiter } from '../middleware/rateLimiter.js';
+import { logAudit } from '../utils/auditLogger.js';
 
 export const authRouter = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'sire_cv_secret_key_2026_magisterial';
 
 // POST /auth/registro
-authRouter.post('/registro', async (req: Request, res: Response): Promise<void> => {
+authRouter.post('/registro', authRateLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     const { dni, nombres, apellidos, email, password } = req.body;
 
@@ -30,6 +32,7 @@ authRouter.post('/registro', async (req: Request, res: Response): Promise<void> 
       }
 
       if (row) {
+        logAudit(req, null, dni, 'REGISTRO_FALLIDO', 'DNI ya registrado previamente');
         res.status(409).json({ error: 'El DNI ingresado ya se encuentra registrado en el sistema.' });
         return;
       }
@@ -50,6 +53,8 @@ authRouter.post('/registro', async (req: Request, res: Response): Promise<void> 
           const userPayload = { id: newId, dni, nombres, apellidos, email, rol };
           const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '24h' });
 
+          logAudit(req, newId, dni, 'REGISTRO', 'Registro exitoso de postulante');
+
           res.status(201).json({
             message: 'Registro de postulante completado con éxito.',
             token,
@@ -64,7 +69,7 @@ authRouter.post('/registro', async (req: Request, res: Response): Promise<void> 
 });
 
 // POST /auth/login
-authRouter.post('/login', async (req: Request, res: Response): Promise<void> => {
+authRouter.post('/login', authRateLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     const { dni, password } = req.body;
 
@@ -80,12 +85,14 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
       }
 
       if (!row) {
+        logAudit(req, null, dni, 'LOGIN_FALLIDO', 'DNI no encontrado');
         res.status(401).json({ error: 'Credenciales inválidas. Verifique su DNI y contraseña.' });
         return;
       }
 
       const match = await bcrypt.compare(password, row.password_hash);
       if (!match) {
+        logAudit(req, row.id, dni, 'LOGIN_FALLIDO', 'Contraseña incorrecta');
         res.status(401).json({ error: 'Credenciales inválidas. Verifique su DNI y contraseña.' });
         return;
       }
@@ -100,6 +107,8 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
       };
 
       const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '24h' });
+
+      logAudit(req, row.id, row.dni, 'LOGIN', `Inicio de sesión exitoso (${row.rol})`);
 
       res.status(200).json({
         token,

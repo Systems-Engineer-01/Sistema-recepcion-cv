@@ -123,6 +123,22 @@ export const initDb = (): Promise<void> => {
         if (err) return reject(err);
       });
 
+      // Tabla LogAuditoria (Seguridad y Ley 29733)
+      db.run(`
+        CREATE TABLE IF NOT EXISTS log_auditoria (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          usuario_id INTEGER,
+          dni TEXT,
+          ip TEXT NOT NULL,
+          accion TEXT NOT NULL,
+          detalles TEXT,
+          fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (usuario_id) REFERENCES postulantes(id) ON DELETE SET NULL
+        )
+      `, (err) => {
+        if (err) return reject(err);
+      });
+
       // Semilla: Usuario Evaluador por defecto
       const defaultEvaluadorDni = '99999999';
       db.get('SELECT id FROM postulantes WHERE dni = ?', [defaultEvaluadorDni], async (err, row) => {

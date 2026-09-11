@@ -16,17 +16,20 @@ El proyecto está diseñado como un **Monorepo** con separación clara entre la 
 
 ### **Backend**
 - **Runtime & Framework**: Node.js + Express + TypeScript.
-- **Seguridad & Autenticación**: JWT (`jsonwebtoken`) para control de sesiones sin estado y `bcryptjs` (salt rounds 10) para el cifrado unidireccional de contraseñas.
-- **Procesamiento de Archivos & Validación PDF**: `multer` (procesamiento en memoria) y `pdf-lib` para inspeccionar metadatos de las páginas PDF y validar dimensiones exactas y **orientación vertical A4 (Portrait)**.
+- **Seguridad & Autenticación**: JWT (`jsonwebtoken`) para control de sesiones sin estado, `bcryptjs` (salt rounds 10) para el cifrado de contraseñas, y **Rate Limiting** (`express-rate-limit`) en endpoints de autenticación y carga de archivos.
+- **Cifrado en Reposo (AES-256-CBC)**: Cifrado transparente con `crypto` de Node.js para todos los archivos PDF almacenados en el disco del servidor (`STORAGE_PATH`).
+- **Procesamiento de Archivos & Validación PDF**: `multer` (procesamiento en memoria) y `pdf-lib` para inspeccionar metadatos de las páginas PDF, validar dimensiones exactas, **orientación vertical A4 (Portrait)**, consolidación, foliado electrónico y generación de Actas en PDF.
+- **Exportación & Reportería**: `exceljs` para generación de hojas de cálculo Excel (`.xlsx`) y `pdf-lib` para reportes institucionales en PDF.
 - **Protección**: `cors` y `helmet` para protección de cabeceras HTTP.
 
-### **Base de Datos y Almacenamiento**
+### **Base de Datos y Almacenamiento Institucional (Ley N.º 29733)**
 - **Base de Datos**: **SQLite 3** (`backend/data/sire_cv.sqlite`).
-- **Almacenamiento de Archivos**: Estructura de archivos local cifrada/segura en el servidor (`backend/uploads/postulante_{id}/`).
+- **Almacenamiento de Archivos**: Estructura de archivos local cifrada en el servidor local (`STORAGE_PATH`, por defecto `backend/uploads/postulante_{id}/`).
+- **Auditoría Estricta**: Tabla `log_auditoria` que registra usuario, IP, fecha/hora y detalle de cada acceso, subida o descarga de documentos.
+- **Copia de Seguridad**: Job de backup automático daily (`npm run backup`) que resguarda la carpeta cifrada y la base de datos a `BACKUP_PATH`.
 
-> **💡 Justificación Técnica / Decisiones de Arquitectura:**
-> - **Cumplimiento Normativo (Ley N.º 29733 - Protección de Datos Personales)**: Dado que el expediente contiene datos altamente sensibles (DNI, títulos, certificados de trabajo), se optó por un esquema **On-Premise / Servidor Local Institucional** utilizando SQLite local en lugar de almacenamiento en nube pública.
-> - **Inspección en Memoria con `pdf-lib`**: Antes de persistir cualquier archivo en disco, el backend analiza la primera página del PDF en un buffer temporal para verificar que su ancho y alto cumplan la relación de aspecto A4 vertical, previniendo errores de escaneo que descalifican al postulante.
+> **🔒 NOTA EXPLÍCITA DE CUMPLIMIENTO LEGAL (Ley N.º 29733 - Protección de Datos Personales):**
+> **Ningún archivo PDF cargado ni dato del expediente es enviado a servicios de nube pública (AWS S3, Google Cloud Storage, Azure Blob, etc.).** Todo el almacenamiento y procesamiento se realiza en servidores locales / institucionales bajo estricta soberanía de datos y cifrado en reposo AES-256.
 
 ---
 
@@ -36,17 +39,19 @@ El proyecto está diseñado como un **Monorepo** con separación clara entre la 
 c:\Sistema-recepcion-cv\
 ├── backend/                  # API REST Express + TypeScript
 │   ├── src/
-│   │   ├── db/               # Conexión e inicialización de esquemas SQLite
-│   │   ├── middleware/       # Middleware de autenticación JWT
-│   │   ├── routes/           # Rutas API (/health, /auth, /documentos)
-│   │   └── utils/            # Validador de dimensiones y orientación de PDF A4
-│   └── uploads/              # Almacenamiento local de expediente por postulante
+│   │   ├── db/               # Conexión e inicialización de esquemas SQLite + log_auditoria
+│   │   ├── middleware/       # Autenticación JWT, roles y Rate Limiting
+│   │   ├── routes/           # Rutas API (/health, /auth, /documentos, /expediente, /evaluador, /reportes)
+│   │   ├── scripts/          # Script ejecutable de copia de seguridad (backup.ts)
+│   │   └── utils/            # Validador A4, consolidador PDF, cifrador AES-256 y auditoría
+│   └── uploads/              # Almacenamiento local de expediente cifrado (AES-256 en reposo)
 ├── frontend/                 # Aplicación Web Single Page App (React + Vite)
 │   ├── src/
-│   │   ├── components/       # Componentes Auth (Login/Registro) y Expediente (Slots A-H)
+│   │   ├── components/       # Auth, Expediente (A-H), Evaluador (Bandeja/Detalle) y Reportería (INEI)
 │   │   └── services/         # Cliente HTTP API para comunicación con Backend
 │   └── index.html
 ├── docs/                     # Sustento legal, backlog Scrum, manuales de usuario
+├── test_sprint4.mjs          # Script de prueba e integración del Sprint 4
 └── README.md
 ```
 
@@ -59,10 +64,8 @@ El proyecto se gestiona mediante metodología **Scrum**:
 - [x] **Sprint 0 — Fundación del proyecto**: Configuración inicial de monorepo, entornos de compilación de TypeScript para Backend (Express) y Frontend (React + Vite), endpoint de salud `GET /health` y sistema de diseño base.
 - [x] **Sprint 1 — Identidad y carga documental básica**: Modelo de datos de postulantes y documentos en SQLite, autenticación con JWT/Bcrypt, endpoint `POST /documentos/:slot` con validación estricta de PDF vertical A4, y pantalla "Mi expediente" con los 8 slots del checklist (A a H).
 - [x] **Sprint 2 — Foliado digital y declaración jurada**: Unificación de expediente en PDF con `pdf-lib`, foliado electrónico en cada hoja (`Folio k de N`), estampa de Código de Verificación Digital (CVD - SHA256) en pie de página y flujo de Declaración Jurada Digital (Art. 49 TUO Ley 27444) con auditoría de IP y timestamp.
-
 - [x] **Sprint 3 — Panel del evaluador y generación de acta**: Roles JWT (`POSTULANTE` y `EVALUADOR`), bandeja de recepción de expedientes, calificación por rubros A-H del perfil Operador Tecnológico, cálculo automático de dictamen `APTO` / `NO APTO` y generación en PDF del **Acta de Evaluación Documental** oficial con `pdf-lib`.
-
-- [ ] **Sprint 4 — Seguridad, almacenamiento institucional y reportería**: Cifrado en reposo, backups automáticos y tablero estadístico de impacto/ahorro de papel.
+- [x] **Sprint 4 — Seguridad, almacenamiento institucional y reportería (E6 + E7)**: Cifrado en reposo AES-256 en disco local (cumplimiento Ley 29733 sin nube pública), job de backup diario (`npm run backup`), rate limiting en autenticación/uploads, tabla `log_auditoria`, endpoints de reportería cuantitativa y exportación (XLSX/PDF), y tablero de **Ahorro de Papel, Traslados y CO2 para el INEI**.
 
 ---
 
@@ -74,7 +77,17 @@ git clone https://github.com/Systems-Engineer-01/Sistema-recepcion-cv.git
 cd Sistema-recepcion-cv
 ```
 
-### 2. Levantar el Backend
+### 2. Variables de Entorno (Opcional en Desarrollo)
+En `backend/.env`:
+```env
+PORT=4000
+JWT_SECRET=sire_cv_secret_key_2026_magisterial
+ENCRYPTION_KEY=clave_secreta_aes256_institucional_32bytes
+STORAGE_PATH=./uploads
+BACKUP_PATH=./backups
+```
+
+### 3. Levantar el Backend
 ```bash
 cd backend
 npm install
@@ -82,7 +95,7 @@ npm run dev
 ```
 El servidor backend iniciará en `http://localhost:4000`.
 
-### 3. Levantar el Frontend
+### 4. Levantar el Frontend
 En otra ventana de terminal:
 ```bash
 cd frontend
@@ -90,6 +103,12 @@ npm install
 npm run dev
 ```
 La aplicación web estará disponible en `http://localhost:3000`.
+
+### 5. Ejecutar Copia de Seguridad (Backup)
+```bash
+cd backend
+npm run backup
+```
 
 ---
 

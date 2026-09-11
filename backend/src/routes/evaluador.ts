@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { db } from '../db/database.js';
 import { authMiddleware, requireEvaluador, AuthRequest } from '../middleware/auth.js';
 import { generateActaEvaluacionPdf, EvaluacionData, EvaluacionDetalleItem } from '../utils/actaGenerator.js';
+import { logAudit } from '../utils/auditLogger.js';
 
 export const evaluadorRouter = Router();
 
@@ -194,6 +195,7 @@ evaluadorRouter.post('/expedientes/:id/evaluacion', authMiddleware, requireEvalu
               stmt.run(evaluacionId, d.rubro_id, d.cumple ? 1 : 0, d.observacion || '');
             });
             stmt.finalize(() => {
+              logAudit(req, evaluadorId, req.user?.dni, 'EVALUACION_EXPEDIENTE', `Expediente ID: ${expedienteId}, Resultado: ${resultadoFinal}`);
               res.status(200).json({
                 message: `Evaluación registrada correctamente. Resultado Final: ${resultadoFinal}`,
                 resultado_final: resultadoFinal,
@@ -301,6 +303,7 @@ evaluadorRouter.get('/expedientes/:id/acta', authMiddleware, (req: AuthRequest, 
 
         const pdfBuffer = await generateActaEvaluacionPdf(postulante, expediente, evaluacion);
 
+        logAudit(req, req.user?.id, req.user?.dni, 'DESCARGA_ACTA', `Expediente ID: ${expediente.id}, Postulante DNI: ${postulante.dni}`);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `inline; filename="acta_evaluacion_${postulante.dni}.pdf"`);
         res.status(200).send(pdfBuffer);

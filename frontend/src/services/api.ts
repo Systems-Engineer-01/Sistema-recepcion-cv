@@ -91,6 +91,32 @@ export interface ExpedienteDetalleEvaluadorResponse {
   evaluacion: EvaluacionExistente | null;
 }
 
+export interface ReportePostulantesResponse {
+  resumen: {
+    total_postulantes: number;
+    expedientes_completos: number;
+    expedientes_evaluados: number;
+    aptos: number;
+    no_aptos: number;
+    pendientes_evaluar: number;
+  };
+  desglose_slots: Record<string, number>;
+}
+
+export interface ImpactoAmbientalResponse {
+  parametros: {
+    hojasPorExpediente: number;
+    costoTrasladoPen: number;
+  };
+  impacto: {
+    expedientes_digitalizados: number;
+    hojas_papel_ahorradas: number;
+    traslados_evitados: number;
+    ahorro_economico_pen: number;
+    co2_evitado_kg: number;
+  };
+}
+
 export const getToken = (): string | null => {
   return localStorage.getItem('sire_cv_token');
 };
@@ -263,5 +289,40 @@ export const api = {
 
   getActaPdfUrl(expedienteId: number): string {
     return `${API_BASE_URL}/evaluador/expedientes/${expedienteId}/acta`;
+  },
+
+  // REPORTERÍA Y IMPACTO AMBIENTAL (SPRINT 4)
+  async getReportePostulantes(): Promise<ReportePostulantesResponse> {
+    const res = await fetch(`${API_BASE_URL}/reportes/postulantes`, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.error || 'Error al obtener el reporte de postulantes.');
+    }
+    return json;
+  },
+
+  async getImpactoAmbiental(params?: { hojasPorExpediente?: number; costoTraslado?: number }): Promise<ImpactoAmbientalResponse> {
+    const query = new URLSearchParams();
+    if (params?.hojasPorExpediente) query.append('hojasPorExpediente', String(params.hojasPorExpediente));
+    if (params?.costoTraslado) query.append('costoTraslado', String(params.costoTraslado));
+
+    const res = await fetch(`${API_BASE_URL}/reportes/impacto-ambiental?${query.toString()}`, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.error || 'Error al obtener el cálculo de impacto ambiental.');
+    }
+    return json;
+  },
+
+  getExportarUrl(formato: 'xlsx' | 'pdf'): string {
+    return `${API_BASE_URL}/reportes/exportar?formato=${formato}`;
   },
 };
