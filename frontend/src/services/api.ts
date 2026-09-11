@@ -17,6 +17,20 @@ export interface Documento {
   creado_en: string;
 }
 
+export interface ExpedienteStatus {
+  id?: number;
+  postulante_id?: number;
+  estado: 'EN_PROCESO' | 'FINALIZADO';
+  pdf_consolidado_url?: string;
+  hash_cvd?: string;
+  short_hash_cvd?: string;
+  total_paginas?: number;
+  declaracion_aceptada?: number;
+  declaracion_ip?: string;
+  declaracion_fecha?: string;
+  finalizado_en?: string;
+}
+
 export const getToken = (): string | null => {
   return localStorage.getItem('sire_cv_token');
 };
@@ -112,6 +126,33 @@ export const api = {
     const json = await res.json();
     if (!res.ok) {
       throw new Error(json.error || 'Error al subir el documento.');
+    }
+    return json;
+  },
+
+  async getExpedienteStatus(): Promise<ExpedienteStatus> {
+    const res = await fetch(`${API_BASE_URL}/expediente`, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.error || 'Error al obtener el estado del expediente.');
+    }
+    return json.expediente;
+  },
+
+  async finalizarExpediente(declaracionAceptada: boolean): Promise<{ message: string; expediente: ExpedienteStatus }> {
+    const res = await fetch(`${API_BASE_URL}/expediente/finalizar`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ declaracionAceptada }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.error || 'Error al finalizar el expediente.');
     }
     return json;
   },

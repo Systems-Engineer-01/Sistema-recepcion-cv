@@ -50,6 +50,25 @@ export const initDb = (): Promise<void> => {
         )
       `, (err) => {
         if (err) return reject(err);
+      });
+
+      // Tabla Expedientes (Foliado, CVD y Declaración Jurada)
+      db.run(`
+        CREATE TABLE IF NOT EXISTS expedientes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          postulante_id INTEGER UNIQUE NOT NULL,
+          estado TEXT NOT NULL DEFAULT 'EN_PROCESO',
+          pdf_consolidado_url TEXT,
+          hash_cvd TEXT,
+          total_paginas INTEGER DEFAULT 0,
+          declaracion_aceptada INTEGER DEFAULT 0,
+          declaracion_ip TEXT,
+          declaracion_fecha DATETIME,
+          finalizado_en DATETIME,
+          FOREIGN KEY (postulante_id) REFERENCES postulantes(id) ON DELETE CASCADE
+        )
+      `, (err) => {
+        if (err) return reject(err);
         resolve();
       });
     });

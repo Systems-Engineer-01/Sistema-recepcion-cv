@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import {
   Upload,
-
   CheckCircle2,
   AlertCircle,
   Clock,
   ExternalLink,
   UserCheck,
   FileCheck,
-  RefreshCw
+  RefreshCw,
+  FileSpreadsheet,
+  ShieldCheck,
+  Download,
+  Lock,
+  Sparkles,
+  Layers
 } from 'lucide-react';
-import { api, Documento, User } from '../services/api';
+import { api, Documento, ExpedienteStatus, User } from '../services/api';
 
 interface ExpedienteProps {
   user: User;
@@ -36,20 +41,36 @@ const SLOTS: SlotDefinition[] = [
 
 export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
   const [documentos, setDocumentos] = useState<Record<string, Documento>>({});
+  const [expedienteStatus, setExpedienteStatus] = useState<ExpedienteStatus | null>(null);
+  
   const [loading, setLoading] = useState<boolean>(true);
   const [uploadingSlot, setUploadingSlot] = useState<string | null>(null);
   const [slotErrors, setSlotErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
 
-  const fetchDocumentos = async () => {
+  // Declaración Jurada form state
+  const [declaracionChecked, setDeclaracionChecked] = useState<boolean>(false);
+  const [finalizing, setFinalizing] = useState<boolean>(false);
+  const [finalizationSuccessMessage, setFinalizationSuccessMessage] = useState<string | null>(null);
+
+  const fetchExpedienteData = async () => {
     setLoading(true);
     try {
-      const docs = await api.getDocumentos();
+      const [docs, status] = await Promise.all([
+        api.getDocumentos(),
+        api.getExpedienteStatus(),
+      ]);
+
       const docMap: Record<string, Documento> = {};
       docs.forEach((doc) => {
         docMap[doc.slot] = doc;
       });
       setDocumentos(docMap);
+      setExpedienteStatus(status);
+
+      if (status.declaracion_aceptada === 1) {
+        setDeclaracionChecked(true);
+      }
     } catch (err: any) {
       setGeneralError(err.message || 'Error al cargar los documentos de su expediente.');
     } finally {
@@ -58,7 +79,7 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
   };
 
   useEffect(() => {
-    fetchDocumentos();
+    fetchExpedienteData();
   }, []);
 
   const handleFileUpload = async (slotKey: string, file: File) => {
@@ -92,8 +113,38 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
     }
   };
 
+  const handleFinalizarExpediente = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGeneralError(null);
+    setFinalizationSuccessMessage(null);
+
+    if (!declaracionChecked) {
+      setGeneralError('Debe marcar obligatoriamente el checkbox de la Declaración Jurada Digital (Art. 49 TUO Ley 27444).');
+      return;
+    }
+
+    const loadedCount = Object.keys(documentos).length;
+    if (loadedCount === 0) {
+      setGeneralError('Debe subir al menos un documento del checklist antes de finalizar y foliar su expediente.');
+      return;
+    }
+
+    setFinalizing(true);
+
+    try {
+      const res = await api.finalizarExpediente(declaracionChecked);
+      setExpedienteStatus(res.expediente);
+      setFinalizationSuccessMessage(res.message || 'Expediente foliado y firmado digitalmente con éxito.');
+    } catch (err: any) {
+      setGeneralError(err.message || 'Error al procesar la consolidación y foliado del expediente.');
+    } finally {
+      setFinalizing(false);
+    }
+  };
+
   const countCargados = Object.keys(documentos).length;
-  const progressPercent = Math.round((countCargados / SLOTS.length) * 100);
+  const isFinalizado = expedienteStatus?.estado === 'FINALIZADO';
+
 
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -104,12 +155,12 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
   };
 
   return (
-    <div style={{ maxWidth: '960px', margin: '0 auto', width: '100%' }}>
-      {/* Profil Banner */}
+    <div style={{ maxWidth: '980px', margin: '0 auto', width: '100%' }}>
+      {/* Profile & Status Header */}
       <div style={{
         background: 'var(--bg-card)',
         backdropFilter: 'blur(16px)',
-        border: '1px solid var(--border-card)',
+        border: isFinalizado ? '1px solid rgba(20, 184, 166, 0.4)' : '1px solid var(--border-card)',
         borderRadius: 'var(--radius-lg)',
         padding: '1.75rem',
         marginBottom: '2rem',
@@ -118,26 +169,28 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: '1.25rem',
-        boxShadow: 'var(--shadow-card)'
+        boxShadow: isFinalizado ? '0 0 30px rgba(20, 184, 166, 0.15)' : 'var(--shadow-card)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{
-            width: '52px',
-            height: '52px',
+            width: '56px',
+            height: '56px',
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--primary), var(--accent-teal))',
+            background: isFinalizado
+              ? 'linear-gradient(135deg, #059669, #0d9488)'
+              : 'linear-gradient(135deg, var(--primary), var(--accent-teal))',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: '#fff',
             fontWeight: 700,
             fontSize: '1.2rem',
-            boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
+            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.3)'
           }}>
-            <UserCheck size={26} />
+            <UserCheck size={28} />
           </div>
           <div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)' }}>
+            <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)' }}>
               {user.nombres} {user.apellidos}
             </div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', gap: '1rem', marginTop: '0.2rem' }}>
@@ -148,34 +201,114 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
           </div>
         </div>
 
-        {/* Progress gauge */}
+        {/* Status Badge */}
         <div style={{
-          minWidth: '220px',
           background: 'rgba(15, 23, 42, 0.6)',
           border: '1px solid var(--border-card)',
-          padding: '1rem 1.25rem',
-          borderRadius: 'var(--radius-md)'
+          padding: '0.85rem 1.25rem',
+          borderRadius: 'var(--radius-md)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: '0.3rem'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Avance del Expediente</span>
-            <span style={{ color: '#fff', fontWeight: 700 }}>{countCargados} / {SLOTS.length} Slots</span>
-          </div>
-          <div style={{
-            width: '100%',
-            height: '8px',
-            background: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '999px',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              height: '100%',
-              width: `${progressPercent}%`,
-              background: 'linear-gradient(to right, var(--primary), var(--accent-teal))',
-              transition: 'width 0.4s ease'
-            }}></div>
-          </div>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Estado del Expediente</span>
+          {isFinalizado ? (
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              color: '#34d399',
+              fontWeight: 700,
+              fontSize: '0.9rem'
+            }}>
+              <Sparkles size={16} />
+              FINALIZADO Y FOLIADO
+            </span>
+          ) : (
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              color: '#fbbf24',
+              fontWeight: 700,
+              fontSize: '0.9rem'
+            }}>
+              <Clock size={16} />
+              EN PROCESO ({countCargados}/8 Slots)
+            </span>
+          )}
         </div>
       </div>
+
+      {/* SUCCESS CERTIFICATE BANNER (POST-FINALIZACIÓN) */}
+      {isFinalizado && expedienteStatus && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.15), rgba(30, 41, 59, 0.8))',
+          border: '1px solid rgba(45, 212, 191, 0.4)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '1.75rem',
+          marginBottom: '2rem',
+          boxShadow: '0 8px 32px rgba(13, 148, 136, 0.2)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#2dd4bf', fontWeight: 700, fontSize: '1.15rem' }}>
+                <ShieldCheck size={24} />
+                <span>Certificado de Verificación Digital (CVD) Generado</span>
+              </div>
+              <p style={{ fontSize: '0.85rem', color: '#cbd5e1', marginTop: '0.35rem' }}>
+                Su expediente ha sido foliado automáticamente conforme al numeral 6.3 del comunicado oficial y cuenta con validez legal digital.
+              </p>
+            </div>
+
+            {expedienteStatus.pdf_consolidado_url && (
+              <a
+                href={expedienteStatus.pdf_consolidado_url}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-primary"
+                style={{
+                  width: 'auto',
+                  padding: '0.75rem 1.25rem',
+                  background: 'linear-gradient(135deg, #0d9488, #059669)',
+                  boxShadow: '0 4px 15px rgba(13, 148, 136, 0.4)',
+                  margin: 0
+                }}
+              >
+                <Download size={18} />
+                <span>Descargar Expediente Consolidado (.pdf)</span>
+              </a>
+            )}
+          </div>
+
+          {/* Audit Metadata Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '0.85rem', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>CÓDIGO DE VERIFICACIÓN (CVD)</div>
+              <div style={{ fontSize: '0.9rem', color: '#5eead4', fontWeight: 700, fontFamily: 'monospace', marginTop: '0.2rem' }}>
+                {expedienteStatus.hash_cvd?.substring(0, 18).toUpperCase()}...
+              </div>
+            </div>
+
+            <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '0.85rem', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>TOTAL DE FOLIOS ESTAMPADOS</div>
+              <div style={{ fontSize: '0.95rem', color: '#fff', fontWeight: 700, marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Layers size={16} style={{ color: '#2dd4bf' }} />
+                <span>{expedienteStatus.total_paginas} Hojas (Folio 1 al {expedienteStatus.total_paginas})</span>
+              </div>
+            </div>
+
+            <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '0.85rem', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>AUDITORÍA DE DECLARACIÓN JURADA</div>
+              <div style={{ fontSize: '0.78rem', color: '#cbd5e1', marginTop: '0.2rem' }}>
+                <strong>IP:</strong> {expedienteStatus.declaracion_ip || 'Localhost'}<br />
+                <strong>Fecha:</strong> {expedienteStatus.declaracion_fecha ? new Date(expedienteStatus.declaracion_fecha).toLocaleString() : 'Reciente'}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {generalError && (
         <div style={{
@@ -191,6 +324,20 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
         </div>
       )}
 
+      {finalizationSuccessMessage && !isFinalizado && (
+        <div style={{
+          background: 'rgba(34, 197, 94, 0.15)',
+          border: '1px solid rgba(34, 197, 94, 0.4)',
+          borderRadius: 'var(--radius-md)',
+          padding: '1rem',
+          marginBottom: '1.5rem',
+          color: '#86efac',
+          fontSize: '0.9rem'
+        }}>
+          {finalizationSuccessMessage}
+        </div>
+      )}
+
       {/* Header section */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
         <div>
@@ -202,7 +349,7 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
           </p>
         </div>
         <button
-          onClick={fetchDocumentos}
+          onClick={fetchExpedienteData}
           disabled={loading}
           style={{
             background: 'rgba(30, 41, 59, 0.8)',
@@ -223,7 +370,7 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
       </div>
 
       {/* Grid of Slots */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(440px, 1fr))', gap: '1.25rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(440px, 1fr))', gap: '1.25rem', marginBottom: '2.5rem' }}>
         {SLOTS.map((slot) => {
           const doc = documentos[slot.key];
           const isUploaded = Boolean(doc);
@@ -244,7 +391,6 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-
                 transition: 'all 0.2s ease',
                 boxShadow: isUploaded ? '0 4px 20px rgba(34, 197, 94, 0.08)' : 'none'
               }}
@@ -369,6 +515,7 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
                   id={`file-input-${slot.key}`}
                   accept="application/pdf"
                   style={{ display: 'none' }}
+                  disabled={isFinalizado}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
@@ -389,13 +536,13 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
                     color: '#ffffff',
                     fontSize: '0.825rem',
                     fontWeight: 600,
-                    cursor: isUploading ? 'not-allowed' : 'pointer',
+                    cursor: (isUploading || isFinalizado) ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.4rem',
                     transition: 'all 0.2s ease',
-                    opacity: isUploading ? 0.7 : 1
+                    opacity: (isUploading || isFinalizado) ? 0.7 : 1
                   }}
                 >
                   <Upload size={14} />
@@ -411,6 +558,85 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
             </div>
           );
         })}
+      </div>
+
+      {/* SECCIÓN DECLARACIÓN JURADA DIGITAL (ART. 49 TUO LEY 27444) & FOLIADO */}
+      <div style={{
+        background: 'var(--bg-card)',
+        backdropFilter: 'blur(16px)',
+        border: '1px solid var(--border-card)',
+        borderRadius: 'var(--radius-lg)',
+        padding: '2rem',
+        boxShadow: 'var(--shadow-card)',
+        marginBottom: '3rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+          <FileSpreadsheet className="process-banner-icon" size={24} style={{ color: 'var(--primary-light)' }} />
+          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', color: '#fff', margin: 0 }}>
+            Declaración Jurada Digital y Foliado Electrónico
+          </h3>
+        </div>
+
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.5', marginBottom: '1.25rem' }}>
+          Al presionar el botón de finalización, el sistema unificará todos los archivos cargados, calculará el total de folios $N$, y estampará un <strong>Código de Verificación Digital (CVD - SHA256)</strong> con foliado automático <code>Folio k/N</code> en el pie de página de cada hoja.
+        </p>
+
+        <form onSubmit={handleFinalizarExpediente}>
+          <div style={{
+            background: 'rgba(15, 23, 42, 0.6)',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            borderRadius: 'var(--radius-md)',
+            padding: '1.25rem',
+            marginBottom: '1.5rem'
+          }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={declaracionChecked}
+                onChange={(e) => setDeclaracionChecked(e.target.checked)}
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  marginTop: '2px',
+                  accentColor: 'var(--primary)',
+                  cursor: 'pointer'
+                }}
+              />
+              <span style={{ fontSize: '0.85rem', color: '#e2e8f0', lineHeight: '1.5' }}>
+                <strong>DECLARACIÓN JURADA (Art. 49 TUO de la Ley N.º 27444):</strong> Declaro bajo juramento que toda la información contenida en el presente expediente es verídica, los documentos adjuntos son copia fiel de los originales y cumplo con los requisitos exigidos en las bases de la convocatoria, sujetándome a las sanciones administrativas, civiles y penales correspondientes en caso de falsedad.
+              </span>
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            className="btn-primary"
+            disabled={finalizing || !declaracionChecked || countCargados === 0}
+            style={{
+              padding: '1rem',
+              fontSize: '1rem',
+              background: isFinalizado
+                ? 'linear-gradient(135deg, #0d9488, #059669)'
+                : 'linear-gradient(135deg, var(--primary), #1d4ed8)',
+              opacity: (!declaracionChecked || countCargados === 0 || finalizing) ? 0.6 : 1,
+              cursor: (!declaracionChecked || countCargados === 0 || finalizing) ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {finalizing ? (
+              <span>Unificando PDF, calculando Hash CVD y Foliando...</span>
+            ) : isFinalizado ? (
+              <>
+                <RefreshCw size={18} />
+                <span>Volver a Consolidar y Re-Foliar Expediente</span>
+              </>
+            ) : (
+              <>
+                <Lock size={18} />
+                <span>Finalizar y Foliar Expediente Digital</span>
+              </>
+            )}
+          </button>
+        </form>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 # Manual de Usuario — SIRE-CV
-*(Documento vivo: se actualiza al cierre de cada sprint. Versión actual: **Sprint 1 — Identidad y Carga Documental**)*
+*(Documento vivo: se actualiza al cierre de cada sprint. Versión actual: **Sprint 2 — Foliado Digital y Declaración Jurada**)*
 
 ## 1. ¿Qué es SIRE-CV?
 Sistema para presentar tu Currículum Vitae documentado de forma digital, respetando el mismo orden y checklist (A–H) del comunicado oficial, sin necesidad de folder manila, firma física ni traslado presencial.
@@ -34,28 +34,27 @@ Al ingresar a **Mi Expediente**, visualizará los 8 slots documentales del check
 | G | `FICHA_SUNEDU` | Ficha SUNEDU / Registro | Constancia de inscripción en SUNEDU o Colegio Profesional. |
 | H | `OTROS` | Otros Documentos | Documentación complementaria sustentatoria. |
 
-### Pasos para subir un documento:
-1. Ubique el slot correspondiente (ej. *C. Documento Nacional de Identidad*).
-2. Presione el botón **Subir Documento (PDF A4)**.
-3. Seleccione el archivo PDF de su equipo.
-4. El sistema verificará automáticamente:
-   - Que sea un archivo PDF válido.
-   - Que no supere los 10MB.
-   - **Que la primera página esté orientada en formato vertical A4**.
-5. Si el archivo es válido, se marcará el estado como **CARGADO** (color verde) y se mostrará el nombre del archivo, fecha y enlace para previsualizar.
-6. Si el archivo no cumple los requisitos (por ejemplo, si escaneó una hoja en horizontal), el sistema mostrará un mensaje de rechazo explicativo para que corrija la orientación antes de subirlo.
-
-## 5. Firma y foliado digital (Código de Verificación Digital)
-*(Se documentará al cierre del Sprint 2.)*
+## 5. Firma y foliado digital (Código de Verificación Digital - CVD)
+Al haber cargado los documentos requeridos:
+1. Diríjase a la sección **"Declaración Jurada Digital y Foliado Electrónico"** al final de la página.
+2. Marque la casilla de verificación obligatoria del Art. 49 del TUO de la Ley N.º 27444.
+3. Haga clic en el botón **"Finalizar y Foliar Expediente Digital"**.
+4. El sistema compilará todos los archivos PDF en el orden legal estricto A $\rightarrow$ H y estampará en el pie de página de cada hoja:
+   - **Código de Verificación Digital (CVD)**: Hash criptográfico SHA-256 del documento.
+   - **Foliado Digital Equivalente**: Numeración estandarizada `Folio k de N` (donde $N$ es el total de hojas del expediente).
+   - **Marca Temporal de Servidor**: Fecha y hora de generación.
+5. Al finalizar, el sistema mostrará la tarjeta de **Certificado CVD** con el resumen auditado y habilitará el botón **"Descargar Expediente Consolidado (.pdf)"**.
 
 ## 6. Declaración jurada digital
-*(Se documentará al cierre del Sprint 2.)*
+La firma de la Declaración Jurada Digital se ampara en el **Art. 49 del TUO de la Ley N.º 27444 (Ley del Procedimiento Administrativo General)**:
+- Registrarla en el sistema equivale a una declaración bajo juramento sobre la autenticidad y veracidad de toda la documentación presentada.
+- En el momento de la firma, el sistema registra de forma inmutable en la base de datos la **dirección IP del usuario**, la **fecha y hora exacta**, y el **Hash SHA-256** del expediente compilado.
 
 ## 7. Para el personal que recepciona (panel del evaluador)
 *(Se documentará al cierre del Sprint 3.)*
 
 ## 8. Preguntas frecuentes
-- **¿Qué ocurre si subo un archivo en orientación horizontal (Landscape)?**
-  *El sistema rechazará automáticamente la carga indicándole que el reglamento del concurso exige el formato A4 vertical. Deberá rotar la página a vertical y volver a intentar.*
-- **¿Puedo reemplazar un documento ya cargado?**
-  *Sí, en cualquier momento puede hacer clic en "Reemplazar Documento PDF" dentro del slot deseado para actualizar el archivo.*
+- **¿Qué ocurre si agrego o reemplazo un archivo después de haber finalizado?**
+  *Puede presionar en "Volver a Consolidar y Re-Foliar Expediente" para generar un nuevo PDF unificado con un Hash CVD actualizado y folios re-calculados.*
+- **¿Es necesario firmar físicamente con lapicero azul cada hoja?**
+  *No. El Código de Verificación Digital (CVD SHA-256) estampado electrónicamente en el pie de cada hoja otorga validez legal equivalente conforme al marco de Gobierno Digital del Perú.*

@@ -75,8 +75,11 @@ y push a la rama main.
 
 ---
 
-## Sprint 2 — Foliado digital y declaración jurada (E3 + E4)
-**Objetivo:** cada expediente se folia automáticamente en el orden inverso que exige el comunicado (última hoja física = primer folio digital) y el postulante firma una declaración jurada digital.
+- [x] Job de consolidación de PDF con `pdf-lib` y foliado automático en formato `Folio k/N` (numeral 6.3).
+- [x] Estampa de Código de Verificación Digital (CVD) SHA-256 + timestamp en pie de página de cada hoja.
+- [x] Flujo de Declaración Jurada Digital (Art. 49 TUO Ley 27444) con registro auditado de IP, fecha/hora y hash en SQLite.
+
+
 
 **Prompt (resumen para Antigravity):**
 ```

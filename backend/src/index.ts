@@ -8,6 +8,7 @@ import { initDb } from './db/database.js';
 import { healthRouter } from './routes/health.js';
 import { authRouter } from './routes/auth.js';
 import { documentosRouter } from './routes/documentos.js';
+import { expedienteRouter } from './routes/expediente.js';
 
 dotenv.config();
 
@@ -31,14 +32,16 @@ app.use('/uploads', express.static(uploadsDir));
 app.use('/', healthRouter);
 app.use('/auth', authRouter);
 app.use('/documentos', documentosRouter);
+app.use('/expediente', expedienteRouter);
 
 // Ruta raíz
 app.get('/', (req: Request, res: Response) => {
   res.json({
-    message: 'SIRE-CV API Server - Sprint 1 (Identidad y Expediente)',
+    message: 'SIRE-CV API Server - Sprint 2 (Foliado y Declaración Jurada)',
     health: '/health',
     auth: '/auth',
     documentos: '/documentos',
+    expediente: '/expediente',
   });
 });
 

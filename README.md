@@ -58,7 +58,8 @@ El proyecto se gestiona mediante metodología **Scrum**:
 
 - [x] **Sprint 0 — Fundación del proyecto**: Configuración inicial de monorepo, entornos de compilación de TypeScript para Backend (Express) y Frontend (React + Vite), endpoint de salud `GET /health` y sistema de diseño base.
 - [x] **Sprint 1 — Identidad y carga documental básica**: Modelo de datos de postulantes y documentos en SQLite, autenticación con JWT/Bcrypt, endpoint `POST /documentos/:slot` con validación estricta de PDF vertical A4, y pantalla "Mi expediente" con los 8 slots del checklist (A a H).
-- [ ] **Sprint 2 — Foliado digital y declaración jurada**: Generación de PDF consolidado, asignación de folios $k/n$, estampa de Código de Verificación Digital (CVD) SHA-256 y firma de declaración jurada digital (Art. 49 TUO Ley 27444).
+- [x] **Sprint 2 — Foliado digital y declaración jurada**: Unificación de expediente en PDF con `pdf-lib`, foliado electrónico en cada hoja (`Folio k de N`), estampa de Código de Verificación Digital (CVD - SHA256) en pie de página y flujo de Declaración Jurada Digital (Art. 49 TUO Ley 27444) con auditoría de IP y timestamp.
+
 - [ ] **Sprint 3 — Panel del evaluador**: Vista de revisión de expediente para recepcionistas con marcado de cumple/no cumple por rubro y generación de actas.
 - [ ] **Sprint 4 — Seguridad, almacenamiento institucional y reportería**: Cifrado en reposo, backups automáticos y tablero estadístico de impacto/ahorro de papel.
 
