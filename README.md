@@ -1,39 +1,95 @@
 # SIRE-CV · Sistema Integrado de Recepción Electrónica de Currículum Vitae
 
-Plataforma para digitalizar la recepción, ordenamiento y verificación de expedientes (CV) de postulantes a procesos de selección de personal en el sector público (piloto: **Operador Tecnológico** — Concurso de Ascenso de Escala Magisterial 2026), eliminando la exigencia de presentación física en folder manila.
+Plataforma web de arquitectura modular para digitalizar la recepción, ordenamiento y verificación de expedientes (CV) de postulantes a procesos de selección de personal en el sector público (piloto: **Operador Tecnológico** — Concurso de Ascenso de Escala Magisterial 2026), eliminando la exigencia de presentación física en folder manila.
 
-## Por qué existe este proyecto
+---
 
-El comunicado oficial de "Especificaciones para la Entrega y Presentación del CV" exige: folder manila A4, firma y foliado manual con lapicero de tinta azul en cada hoja, copias físicas de título/bachiller/constancias, y entrega presencial en una sede única dentro de un horario fijo. Esto genera:
+## 🛠️ Arquitectura y Stack Tecnológico
 
-- **Costos de traslado** para postulantes de zonas alejadas.
-- **Papel desperdiciado**: todo el expediente de un postulante descalificado o no apto queda como residuo sin reúso posible (ya firmado y foliado).
-- **Cuellos de botella operativos** para quien recepciona: verificación manual, hoja por hoja, del orden A→H y del folio "n/n".
+El proyecto está diseñado como un **Monorepo** con separación clara entre la capa de presentación (Frontend SPA) y la capa de servicios de dominio (Backend REST API).
 
-SIRE-CV traslada ese mismo checklist y ese mismo orden documental a un flujo digital con el mismo valor legal, apoyado en el marco de Gobierno Digital del Perú (ver `docs/Sustento_Legal_y_Propuesta.docx`).
+### **Frontend**
+- **Core**: React 19 + TypeScript.
+- **Tooling & Build**: Vite (servidor de desarrollo HMR ultrarrápido y empaquetado de producción optimizado).
+- **Estilos**: Vanilla CSS con variables CSS3, paleta de colores slate/navy, diseño responsivo y efectos *glassmorphic*.
+- **Iconografía**: `lucide-react`.
 
-## Alcance del piloto (MVP)
+### **Backend**
+- **Runtime & Framework**: Node.js + Express + TypeScript.
+- **Seguridad & Autenticación**: JWT (`jsonwebtoken`) para control de sesiones sin estado y `bcryptjs` (salt rounds 10) para el cifrado unidireccional de contraseñas.
+- **Procesamiento de Archivos & Validación PDF**: `multer` (procesamiento en memoria) y `pdf-lib` para inspeccionar metadatos de las páginas PDF y validar dimensiones exactas y **orientación vertical A4 (Portrait)**.
+- **Protección**: `cors` y `helmet` para protección de cabeceras HTTP.
 
-1. Registro/autenticación del postulante (DNI + credenciales).
-2. Carga de cada documento del checklist (A–H del comunicado) en su propio slot, con validación de formato (PDF, tamaño, orientación vertical).
-3. Generación automática de un **Código de Verificación Digital (CVD)** y foliado electrónico equivalente a "1/n" por cada documento, en el orden inverso que exige el comunicado (numeral 6.3).
-4. Declaración jurada digital con checkbox + registro de IP/fecha/hora, al amparo del art. 49 del TUO de la Ley 27444.
-5. Panel del evaluador/receptor: ver expediente ordenado, marcar cumple/no cumple por rubro, exportar acta.
-6. Almacenamiento cifrado en servidor local/institucional (no nube pública) para cumplir el resguardo de datos de la Ley 29733.
+### **Base de Datos y Almacenamiento**
+- **Base de Datos**: **SQLite 3** (`backend/data/sire_cv.sqlite`).
+- **Almacenamiento de Archivos**: Estructura de archivos local cifrada/segura en el servidor (`backend/uploads/postulante_{id}/`).
 
-## Estructura del repositorio
+> **💡 Justificación Técnica / Decisiones de Arquitectura:**
+> - **Cumplimiento Normativo (Ley N.º 29733 - Protección de Datos Personales)**: Dado que el expediente contiene datos altamente sensibles (DNI, títulos, certificados de trabajo), se optó por un esquema **On-Premise / Servidor Local Institucional** utilizando SQLite local en lugar de almacenamiento en nube pública.
+> - **Inspección en Memoria con `pdf-lib`**: Antes de persistir cualquier archivo en disco, el backend analiza la primera página del PDF en un buffer temporal para verificar que su ancho y alto cumplan la relación de aspecto A4 vertical, previniendo errores de escaneo que descalifican al postulante.
 
+---
+
+## 📂 Estructura del Repositorio
+
+```text
+c:\Sistema-recepcion-cv\
+├── backend/                  # API REST Express + TypeScript
+│   ├── src/
+│   │   ├── db/               # Conexión e inicialización de esquemas SQLite
+│   │   ├── middleware/       # Middleware de autenticación JWT
+│   │   ├── routes/           # Rutas API (/health, /auth, /documentos)
+│   │   └── utils/            # Validador de dimensiones y orientación de PDF A4
+│   └── uploads/              # Almacenamiento local de expediente por postulante
+├── frontend/                 # Aplicación Web Single Page App (React + Vite)
+│   ├── src/
+│   │   ├── components/       # Componentes Auth (Login/Registro) y Expediente (Slots A-H)
+│   │   └── services/         # Cliente HTTP API para comunicación con Backend
+│   └── index.html
+├── docs/                     # Sustento legal, backlog Scrum, manuales de usuario
+└── README.md
 ```
-backend/     API (subida de archivos, validación, expedientes, roles)
-frontend/    Aplicación web del postulante y del evaluador
-docs/        Sustento legal, backlog Scrum, manual de usuario, actas de sprint
-.github/     Workflows de CI (lint/test) por sprint
+
+---
+
+## 🚀 Estado de Desarrollo y Sprints
+
+El proyecto se gestiona mediante metodología **Scrum**:
+
+- [x] **Sprint 0 — Fundación del proyecto**: Configuración inicial de monorepo, entornos de compilación de TypeScript para Backend (Express) y Frontend (React + Vite), endpoint de salud `GET /health` y sistema de diseño base.
+- [x] **Sprint 1 — Identidad y carga documental básica**: Modelo de datos de postulantes y documentos en SQLite, autenticación con JWT/Bcrypt, endpoint `POST /documentos/:slot` con validación estricta de PDF vertical A4, y pantalla "Mi expediente" con los 8 slots del checklist (A a H).
+- [ ] **Sprint 2 — Foliado digital y declaración jurada**: Generación de PDF consolidado, asignación de folios $k/n$, estampa de Código de Verificación Digital (CVD) SHA-256 y firma de declaración jurada digital (Art. 49 TUO Ley 27444).
+- [ ] **Sprint 3 — Panel del evaluador**: Vista de revisión de expediente para recepcionistas con marcado de cumple/no cumple por rubro y generación de actas.
+- [ ] **Sprint 4 — Seguridad, almacenamiento institucional y reportería**: Cifrado en reposo, backups automáticos y tablero estadístico de impacto/ahorro de papel.
+
+---
+
+## 💻 Instrucciones para Desarrolladores
+
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com/Systems-Engineer-01/Sistema-recepcion-cv.git
+cd Sistema-recepcion-cv
 ```
 
-## Cómo se construye
+### 2. Levantar el Backend
+```bash
+cd backend
+npm install
+npm run dev
+```
+El servidor backend iniciará en `http://localhost:4000`.
 
-Este proyecto se gestiona con **Scrum**: cada Sprint cierra con un commit/tag y un push a este repositorio (ver `docs/Backlog_y_Sprints_Scrum.md`). La implementación de código se ejecuta con **Antigravity + Gemini 3 Pro (High)** a partir de los prompts de sprint documentados en ese mismo archivo; este repositorio y la gestión del backlog son responsabilidad del rol de Gestor de Proyecto (Claude).
+### 3. Levantar el Frontend
+En otra ventana de terminal:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+La aplicación web estará disponible en `http://localhost:3000`.
 
-## Estado
+---
 
-Sprint 0 — Fundación del proyecto (en curso). Ver `docs/Backlog_y_Sprints_Scrum.md`.
+## 📄 Licencia y Marco Legal
+Desarrollado bajo el marco de Gobierno Digital del Perú y en cumplimiento del TUO de la Ley N.º 27444 (Ley del Procedimiento Administrativo General) y la Ley N.º 29733 (Ley de Protección de Datos Personales).
