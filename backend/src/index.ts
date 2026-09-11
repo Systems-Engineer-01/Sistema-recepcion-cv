@@ -11,6 +11,7 @@ import { documentosRouter, getStorageDir } from './routes/documentos.js';
 import { expedienteRouter } from './routes/expediente.js';
 import { evaluadorRouter } from './routes/evaluador.js';
 import { reportesRouter } from './routes/reportes.js';
+import { seguridadRouter } from './routes/seguridad.js';
 import { globalRateLimiter } from './middleware/rateLimiter.js';
 import { decryptBuffer } from './utils/encryption.js';
 import { logAudit } from './utils/auditLogger.js';
@@ -65,6 +66,7 @@ app.use('/documentos', documentosRouter);
 app.use('/expediente', expedienteRouter);
 app.use('/evaluador', evaluadorRouter);
 app.use('/reportes', reportesRouter);
+app.use('/seguridad', seguridadRouter);
 
 // Ruta raíz
 app.get('/', (req: Request, res: Response) => {

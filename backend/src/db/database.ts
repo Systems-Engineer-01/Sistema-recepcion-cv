@@ -31,16 +31,18 @@ export const initDb = (): Promise<void> => {
           email TEXT NOT NULL,
           password_hash TEXT NOT NULL,
           rol TEXT NOT NULL DEFAULT 'POSTULANTE',
+          intentos_fallidos INTEGER DEFAULT 0,
+          bloqueado_hasta DATETIME DEFAULT NULL,
           creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `, (err) => {
         if (err) return reject(err);
       });
 
-      // Asegurar columna rol si la tabla ya existía
-      db.run(`ALTER TABLE postulantes ADD COLUMN rol TEXT NOT NULL DEFAULT 'POSTULANTE'`, () => {
-        // Ignorar error si ya existe
-      });
+      // Asegurar columnas de migración si la tabla ya existía
+      db.run(`ALTER TABLE postulantes ADD COLUMN rol TEXT NOT NULL DEFAULT 'POSTULANTE'`, () => {});
+      db.run(`ALTER TABLE postulantes ADD COLUMN intentos_fallidos INTEGER DEFAULT 0`, () => {});
+      db.run(`ALTER TABLE postulantes ADD COLUMN bloqueado_hasta DATETIME DEFAULT NULL`, () => {});
 
       // Tabla Documentos
       db.run(`
@@ -123,7 +125,7 @@ export const initDb = (): Promise<void> => {
         if (err) return reject(err);
       });
 
-      // Tabla LogAuditoria (Seguridad y Ley 29733)
+      // Tabla LogAuditoria (Seguridad NTP-ISO/IEC 27001:2022 y Ley 29733)
       db.run(`
         CREATE TABLE IF NOT EXISTS log_auditoria (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -132,12 +134,21 @@ export const initDb = (): Promise<void> => {
           ip TEXT NOT NULL,
           accion TEXT NOT NULL,
           detalles TEXT,
+          sistema_operativo TEXT,
+          navegador TEXT,
+          dispositivo TEXT,
+          ubicacion_aproximada TEXT,
           fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (usuario_id) REFERENCES postulantes(id) ON DELETE SET NULL
         )
       `, (err) => {
         if (err) return reject(err);
       });
+
+      db.run(`ALTER TABLE log_auditoria ADD COLUMN sistema_operativo TEXT`, () => {});
+      db.run(`ALTER TABLE log_auditoria ADD COLUMN navegador TEXT`, () => {});
+      db.run(`ALTER TABLE log_auditoria ADD COLUMN dispositivo TEXT`, () => {});
+      db.run(`ALTER TABLE log_auditoria ADD COLUMN ubicacion_aproximada TEXT`, () => {});
 
       // Semilla: Usuario Evaluador por defecto
       const defaultEvaluadorDni = '99999999';

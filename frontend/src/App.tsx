@@ -4,15 +4,16 @@ import { Expediente } from './components/Expediente';
 import { EvaluadorBandeja } from './components/EvaluadorBandeja';
 import { EvaluadorDetalle } from './components/EvaluadorDetalle';
 import { Reporteria } from './components/Reporteria';
+import { AuditoriaSeguridad } from './components/AuditoriaSeguridad';
 import { api, getToken, removeToken, User } from './services/api';
-import { LogOut, UserCheck, Inbox, BarChart3 } from 'lucide-react';
+import { LogOut, UserCheck, Inbox, BarChart3, ShieldCheck, Info } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   // Evaluator Navigation State
-  const [activeTab, setActiveTab] = useState<'bandeja' | 'reportes'>('bandeja');
+  const [activeTab, setActiveTab] = useState<'bandeja' | 'reportes' | 'seguridad'>('bandeja');
   const [selectedExpedienteId, setSelectedExpedienteId] = useState<number | null>(null);
 
   const checkAuth = async () => {
@@ -64,6 +65,14 @@ export const App: React.FC = () => {
 
   return (
     <div className="app-container">
+      {/* Banner de Entorno de Demostración INEI (NTP-ISO/IEC 27001:2022) */}
+      <div className="bg-amber-500 text-slate-950 font-extrabold text-[11px] uppercase tracking-wider py-1.5 px-4 text-center flex items-center justify-center gap-2 shadow-inner">
+        <Info className="w-4 h-4 shrink-0" />
+        <span>
+          ENTORNO DE DEMOSTRACIÓN Y PRUEBAS INEI &bull; SISTEMA DE GESTIÓN DE SEGURIDAD NTP-ISO/IEC 27001:2022 VIGENTE &bull; LEY N.º 29733
+        </span>
+      </div>
+
       {/* Header Bar */}
       <header className="app-header">
         <div className="header-content">
@@ -106,6 +115,21 @@ export const App: React.FC = () => {
               >
                 <BarChart3 className="w-4 h-4" />
                 <span>Reportería & INEI</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setSelectedExpedienteId(null);
+                  setActiveTab('seguridad');
+                }}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === 'seguridad'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Seguridad & ISO 27001</span>
               </button>
             </div>
           )}
@@ -155,7 +179,9 @@ export const App: React.FC = () => {
         {!user ? (
           <Auth onSuccess={(loggedUser) => setUser(loggedUser)} />
         ) : isEvaluador ? (
-          activeTab === 'reportes' ? (
+          activeTab === 'seguridad' ? (
+            <AuditoriaSeguridad />
+          ) : activeTab === 'reportes' ? (
             <Reporteria />
           ) : selectedExpedienteId ? (
             <EvaluadorDetalle
@@ -175,7 +201,7 @@ export const App: React.FC = () => {
       {/* Footer */}
       <footer className="app-footer">
         <div>
-          SIRE-CV v0.4.0 &bull; Concurso de Ascenso Magisterial 2026 &bull; Almacenamiento Institucional Seguro (Ley N.º 29733)
+          SIRE-CV v0.5.0 &bull; Entorno de Pruebas INEI &bull; Seguridad NTP-ISO/IEC 27001:2022 &bull; Ley N.º 29733 (Servidor Local)
         </div>
       </footer>
     </div>

@@ -117,6 +117,40 @@ export interface ImpactoAmbientalResponse {
   };
 }
 
+export interface LogAuditoriaItem {
+  id: number;
+  usuario_id: number | null;
+  dni: string | null;
+  ip: string;
+  accion: string;
+  detalles: string;
+  sistema_operativo: string | null;
+  navegador: string | null;
+  dispositivo: string | null;
+  ubicacion_aproximada: string | null;
+  fecha_hora: string;
+}
+
+export interface CuentaBloqueadaItem {
+  id: number;
+  dni: string;
+  nombres: string;
+  apellidos: string;
+  intentos_fallidos: number;
+  bloqueado_hasta: string;
+}
+
+export interface SeguridadLogsResponse {
+  logs: LogAuditoriaItem[];
+  paginacion: {
+    total: number;
+    pagina: number;
+    limite: number;
+    totalPaginas: number;
+  };
+  cuentasBloqueadas: CuentaBloqueadaItem[];
+}
+
 export const getToken = (): string | null => {
   return localStorage.getItem('sire_cv_token');
 };
@@ -324,5 +358,38 @@ export const api = {
 
   getExportarUrl(formato: 'xlsx' | 'pdf'): string {
     return `${API_BASE_URL}/reportes/exportar?formato=${formato}`;
+  },
+
+  // SEGURIDAD & TELEMETRÍA SGSI (NTP-ISO/IEC 27001:2022)
+  async getSeguridadLogs(params?: { page?: number; limit?: number; search?: string }): Promise<SeguridadLogsResponse> {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', String(params.page));
+    if (params?.limit) query.append('limit', String(params.limit));
+    if (params?.search) query.append('search', params.search);
+
+    const res = await fetch(`${API_BASE_URL}/seguridad/logs?${query.toString()}`, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.error || 'Error al obtener registros de auditoría de seguridad.');
+    }
+    return json;
+  },
+
+  async desbloquearCuenta(dni: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE_URL}/auth/desbloquear`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ dni }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.error || 'Error al desbloquear la cuenta.');
+    }
+    return json;
   },
 };

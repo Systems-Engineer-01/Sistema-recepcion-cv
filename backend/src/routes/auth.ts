@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { db } from '../db/database.js';
-import { authMiddleware, AuthRequest } from '../middleware/auth.js';
+import { authMiddleware, requireEvaluador, AuthRequest } from '../middleware/auth.js';
 import { authRateLimiter } from '../middleware/rateLimiter.js';
 import { logAudit } from '../utils/auditLogger.js';
 
@@ -68,7 +68,7 @@ authRouter.post('/registro', authRateLimiter, async (req: Request, res: Response
   }
 });
 
-// POST /auth/login
+// POST /auth/login (Con protección contra Fuerza Bruta - NTP-ISO/IEC 27001:2022 A.8.5)
 authRouter.post('/login', authRateLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     const { dni, password } = req.body;
@@ -90,12 +90,61 @@ authRouter.post('/login', authRateLimiter, async (req: Request, res: Response): 
         return;
       }
 
+      // Verificar si la cuenta se encuentra actualmente bloqueada por seguridad
+      if (row.bloqueado_hasta) {
+        const lockTime = new Date(row.bloqueado_hasta).getTime();
+        const nowTime = Date.now();
+
+        if (lockTime > nowTime) {
+          const remainingMinutes = Math.ceil((lockTime - nowTime) / (60 * 1000));
+          logAudit(req, row.id, dni, 'ACCESO_DENEGADO_BLOQUEADO', `Intento de acceso durante bloqueo. Restante: ${remainingMinutes} min`);
+          res.status(429).json({
+            error: `Cuenta bloqueada temporalmente por seguridad (NTP-ISO/IEC 27001:2022). Demasiados intentos fallidos. Intente nuevamente en ${remainingMinutes} minuto(s).`,
+            bloqueado: true,
+            minutosRestantes: remainingMinutes,
+          });
+          return;
+        }
+      }
+
       const match = await bcrypt.compare(password, row.password_hash);
       if (!match) {
-        logAudit(req, row.id, dni, 'LOGIN_FALLIDO', 'Contraseña incorrecta');
-        res.status(401).json({ error: 'Credenciales inválidas. Verifique su DNI y contraseña.' });
-        return;
+        const newAttempts = (row.intentos_fallidos || 0) + 1;
+
+        if (newAttempts >= 5) {
+          // Bloquear por 15 minutos
+          const lockUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+          db.run(
+            'UPDATE postulantes SET intentos_fallidos = ?, bloqueado_hasta = ? WHERE id = ?',
+            [newAttempts, lockUntil, row.id]
+          );
+
+          logAudit(req, row.id, dni, 'CUENTA_BLOQUEADA', 'Bloqueo defensivo activado por 15 minutos (5 intentos fallidos)');
+
+          res.status(429).json({
+            error: 'Cuenta bloqueada temporalmente por 15 minutos debido a 5 intentos fallidos consecutivos de contraseña (NTP-ISO/IEC 27001:2022).',
+            bloqueado: true,
+            minutosRestantes: 15,
+          });
+          return;
+        } else {
+          db.run(
+            'UPDATE postulantes SET intentos_fallidos = ? WHERE id = ?',
+            [newAttempts, row.id]
+          );
+
+          logAudit(req, row.id, dni, 'LOGIN_FALLIDO', `Contraseña incorrecta (Intento ${newAttempts}/5)`);
+
+          res.status(401).json({
+            error: `Credenciales inválidas. Verifique su contraseña. (Intento ${newAttempts} de 5 antes del bloqueo por seguridad).`,
+            intentosRestantes: 5 - newAttempts,
+          });
+          return;
+        }
       }
+
+      // Login exitoso: Resetear contador de fallos y remover bloqueo
+      db.run('UPDATE postulantes SET intentos_fallidos = 0, bloqueado_hasta = NULL WHERE id = ?', [row.id]);
 
       const userPayload = {
         id: row.id,
@@ -118,6 +167,35 @@ authRouter.post('/login', authRateLimiter, async (req: Request, res: Response): 
   } catch (err: any) {
     res.status(500).json({ error: `Error del servidor: ${err.message}` });
   }
+});
+
+// POST /auth/desbloquear - Desbloquear una cuenta bloqueada (Solo Evaluadores/Admins)
+authRouter.post('/desbloquear', authMiddleware, requireEvaluador, (req: AuthRequest, res: Response): void => {
+  const { dni } = req.body;
+  if (!dni) {
+    res.status(400).json({ error: 'Debe especificar el DNI del usuario a desbloquear.' });
+    return;
+  }
+
+  db.run(
+    'UPDATE postulantes SET intentos_fallidos = 0, bloqueado_hasta = NULL WHERE dni = ?',
+    [dni],
+    function (err) {
+      if (err) {
+        res.status(500).json({ error: 'Error al desbloquear la cuenta.' });
+        return;
+      }
+
+      if (this.changes === 0) {
+        res.status(404).json({ error: 'No se encontró un usuario con el DNI especificado.' });
+        return;
+      }
+
+      logAudit(req, req.user?.id, req.user?.dni, 'DESBLOQUEO_MANUAL', `Cuenta DNI ${dni} desbloqueada manualmente`);
+
+      res.status(200).json({ message: `La cuenta con DNI ${dni} ha sido desbloqueada correctamente.` });
+    }
+  );
 });
 
 // GET /auth/me

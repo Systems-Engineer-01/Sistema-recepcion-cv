@@ -1,8 +1,9 @@
 import { Request } from 'express';
 import { db } from '../db/database.js';
+import { extractTelemetry } from './securityTelemetry.js';
 
 /**
- * Registra un evento de auditoría en la tabla `log_auditoria` (Ley 29733)
+ * Registra un evento de auditoría en la tabla `log_auditoria` con telemetría extendida (NTP-ISO/IEC 27001:2022 y Ley 29733)
  */
 export function logAudit(
   req: Request,
@@ -11,13 +12,24 @@ export function logAudit(
   accion: string,
   detalles: string = ''
 ): void {
-  const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
-  const ip = Array.isArray(rawIp) ? rawIp[0] : String(rawIp);
+  const telemetry = extractTelemetry(req);
 
   db.run(
-    `INSERT INTO log_auditoria (usuario_id, dni, ip, accion, detalles)
-     VALUES (?, ?, ?, ?, ?)`,
-    [usuarioId || null, dni || null, ip, accion, detalles],
+    `INSERT INTO log_auditoria (
+      usuario_id, dni, ip, accion, detalles,
+      sistema_operativo, navegador, dispositivo, ubicacion_aproximada
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      usuarioId || null,
+      dni || null,
+      telemetry.ip,
+      accion,
+      detalles,
+      telemetry.sistemaOperativo,
+      telemetry.navegador,
+      telemetry.dispositivo,
+      telemetry.ubicacionAproximada,
+    ],
     (err) => {
       if (err) {
         console.error('[Audit Error] No se pudo guardar el registro de auditoría:', err.message);
