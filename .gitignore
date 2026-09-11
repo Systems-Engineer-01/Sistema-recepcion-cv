@@ -1,0 +1,9 @@
+node_modules/
+.env
+*.log
+dist/
+build/
+uploads/
+*.sqlite
+implementation_plan.md
+walkthrough.md
