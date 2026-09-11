@@ -4,6 +4,12 @@ node_modules/
 dist/
 build/
 uploads/
+backend/uploads/
+backend/data/
 *.sqlite
 implementation_plan.md
+implementation_plan_*.md
 walkthrough.md
+walkthrough_*.md
+tsconfig.tsbuildinfo
+*.tsbuildinfo

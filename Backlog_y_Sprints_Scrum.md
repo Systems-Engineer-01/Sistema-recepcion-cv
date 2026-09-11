@@ -50,10 +50,11 @@ proyecto"`.
 ## Sprint 1 — Identidad y carga documental básica (E1 + E2)
 **Objetivo:** un postulante puede registrarse, iniciar sesión y subir cada uno de los 8 documentos del checklist (A–H) en su propio slot.
 
-Historias de usuario:
-- Como postulante quiero registrarme con mi DNI para que el sistema me identifique de forma única.
-- Como postulante quiero ver los 8 slots (A. Ficha de Inscripción … H. Otros documentos) para saber qué me falta subir.
-- Como postulante quiero que el sistema rechace archivos que no sean PDF vertical A4 para no repetir el error físico de "otra forma de impresión".
+- [x] Registro y Login de postulante por DNI con JWT y bcrypt (Backend + Frontend).
+- [x] Gestión de los 8 slots documentales (A a H) con verificación de PDF vertical A4 (`pdf-lib`) y peso <= 10MB.
+- [x] Persistencia SQLite local en servidor institucional sin nube pública.
+
+
 
 **Prompt para Antigravity/Gemini 3 Pro (High) — Sprint 1:**
 ```
