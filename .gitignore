@@ -11,5 +11,7 @@ implementation_plan.md
 implementation_plan_*.md
 walkthrough.md
 walkthrough_*.md
+tes_sprint.md
+test_*.md
 tsconfig.tsbuildinfo
 *.tsbuildinfo

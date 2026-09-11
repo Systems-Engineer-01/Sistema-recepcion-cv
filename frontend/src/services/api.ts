@@ -6,6 +6,7 @@ export interface User {
   nombres: string;
   apellidos: string;
   email: string;
+  rol: string;
 }
 
 export interface Documento {
@@ -29,6 +30,65 @@ export interface ExpedienteStatus {
   declaracion_ip?: string;
   declaracion_fecha?: string;
   finalizado_en?: string;
+}
+
+export interface ExpedienteResumenEvaluador {
+  expediente_id: number;
+  postulante_id: number;
+  postulante_dni: string;
+  postulante_nombres: string;
+  postulante_apellidos: string;
+  postulante_email: string;
+  expediente_estado: string;
+  pdf_consolidado_url: string;
+  hash_cvd: string;
+  total_paginas: number;
+  finalizado_en: string;
+  evaluacion_id?: number;
+  resultado_final?: 'APTO' | 'NO_APTO';
+  evaluado_en?: string;
+}
+
+export interface Rubro {
+  id: number;
+  codigo: string;
+  nombre: string;
+  descripcion: string;
+  slot_relacionado: string;
+  es_obligatorio: number;
+}
+
+export interface EvaluacionExistente {
+  id: number;
+  resultado_final: 'APTO' | 'NO_APTO';
+  observacion_general?: string;
+  evaluado_en: string;
+  detalles: Array<{
+    rubro_id: number;
+    cumple: number;
+    observacion?: string;
+  }>;
+}
+
+export interface ExpedienteDetalleEvaluadorResponse {
+  expediente: {
+    expediente_id: number;
+    postulante_id: number;
+    postulante_dni: string;
+    postulante_nombres: string;
+    postulante_apellidos: string;
+    postulante_email: string;
+    estado: string;
+    pdf_consolidado_url: string;
+    hash_cvd: string;
+    total_paginas: number;
+    declaracion_ip: string;
+    declaracion_fecha: string;
+    finalizado_en: string;
+  };
+  documentos: Documento[];
+  rubros: Rubro[];
+  evaluacion: EvaluacionExistente | null;
 }
 
 export const getToken = (): string | null => {
@@ -155,5 +215,53 @@ export const api = {
       throw new Error(json.error || 'Error al finalizar el expediente.');
     }
     return json;
+  },
+
+  // EVALUADOR API
+  async getExpedientesEvaluador(): Promise<ExpedienteResumenEvaluador[]> {
+    const res = await fetch(`${API_BASE_URL}/evaluador/expedientes`, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.error || 'Error al obtener lista de expedientes.');
+    }
+    return json.expedientes || [];
+  },
+
+  async getExpedienteDetalleEvaluador(expedienteId: number): Promise<ExpedienteDetalleEvaluadorResponse> {
+    const res = await fetch(`${API_BASE_URL}/evaluador/expedientes/${expedienteId}`, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.error || 'Error al consultar detalle del expediente.');
+    }
+    return json;
+  },
+
+  async evaluarExpediente(
+    expedienteId: number,
+    data: { observacionGeneral?: string; detalles: Array<{ rubro_id: number; cumple: boolean; observacion?: string }> }
+  ) {
+    const res = await fetch(`${API_BASE_URL}/evaluador/expedientes/${expedienteId}/evaluacion`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.error || 'Error al guardar la evaluación.');
+    }
+    return json;
+  },
+
+  getActaPdfUrl(expedienteId: number): string {
+    return `${API_BASE_URL}/evaluador/expedientes/${expedienteId}/acta`;
   },
 };

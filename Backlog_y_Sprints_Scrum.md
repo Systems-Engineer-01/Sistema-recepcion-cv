@@ -100,6 +100,13 @@ declaración jurada" y push.
 ## Sprint 3 — Panel del evaluador (E5)
 **Objetivo:** quien recepciona ve el expediente ya ordenado y foliado, marca cumple/no cumple por rubro contra el perfil de Operador Tecnológico, y el sistema genera el acta.
 
+- [x] Roles JWT (`POSTULANTE` y `EVALUADOR`) con cuenta semillero de evaluador por defecto (`99999999` / `evaluador2026`).
+- [x] Bandeja del evaluador (`EvaluadorBandeja.tsx`) con expedientes finalizados, folios $k/N$ y trazabilidad CVD.
+- [x] Formulario interactivo por rubro (`EvaluadorDetalle.tsx`) con cálculo automático de resultado `APTO` / `NO_APTO`.
+- [x] Generador en PDF del **Acta de Evaluación Documental** oficial (`actaGenerator.ts`) con `pdf-lib`.
+
+
+
 ---
 
 ## Sprint 4 — Seguridad, almacenamiento institucional y reportería (E6 + E7)

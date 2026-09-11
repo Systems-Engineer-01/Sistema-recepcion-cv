@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Auth } from './components/Auth';
 import { Expediente } from './components/Expediente';
+import { EvaluadorBandeja } from './components/EvaluadorBandeja';
+import { EvaluadorDetalle } from './components/EvaluadorDetalle';
 import { api, getToken, removeToken, User } from './services/api';
-import { LogOut } from 'lucide-react';
+import { LogOut, UserCheck } from 'lucide-react';
 
 
 export const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // State for Evaluator navigation
+  const [selectedExpedienteId, setSelectedExpedienteId] = useState<number | null>(null);
 
   const checkAuth = async () => {
     const token = getToken();
@@ -34,6 +39,7 @@ export const App: React.FC = () => {
   const handleLogout = () => {
     removeToken();
     setUser(null);
+    setSelectedExpedienteId(null);
   };
 
   if (loading) {
@@ -52,6 +58,8 @@ export const App: React.FC = () => {
     );
   }
 
+  const isEvaluador = user?.rol === 'EVALUADOR';
+
   return (
     <div className="app-container">
       {/* Header Bar */}
@@ -68,29 +76,38 @@ export const App: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div className="header-status">
               <span className="status-dot"></span>
-              <span>Sprint 1 — Identidad & Expediente</span>
+              <span>
+                {isEvaluador ? 'Panel Evaluador — Concurso 2026' : 'Sprint 3 — Panel Evaluador & Actas'}
+              </span>
             </div>
 
             {user && (
-              <button
-                onClick={handleLogout}
-                style={{
-                  background: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                  color: '#fca5a5',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '0.4rem 0.75rem',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem'
-                }}
-              >
-                <LogOut size={14} />
-                <span>Cerrar Sesión</span>
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  {isEvaluador && <UserCheck size={14} style={{ color: '#4ade80' }} />}
+                  {user.nombres} ({user.rol})
+                </span>
+
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    color: '#fca5a5',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '0.4rem 0.75rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  <LogOut size={14} />
+                  <span>Cerrar Sesión</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -98,17 +115,28 @@ export const App: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="main-content">
-        {user ? (
-          <Expediente user={user} />
-        ) : (
+        {!user ? (
           <Auth onSuccess={(loggedUser) => setUser(loggedUser)} />
+        ) : isEvaluador ? (
+          selectedExpedienteId ? (
+            <EvaluadorDetalle
+              expedienteId={selectedExpedienteId}
+              onBack={() => setSelectedExpedienteId(null)}
+            />
+          ) : (
+            <EvaluadorBandeja
+              onSelectExpediente={(id) => setSelectedExpedienteId(id)}
+            />
+          )
+        ) : (
+          <Expediente user={user} />
         )}
       </main>
 
       {/* Footer */}
       <footer className="app-footer">
         <div>
-          SIRE-CV v0.2.0 &bull; Concurso de Ascenso Magisterial 2026 &bull; Operador Tecnológico
+          SIRE-CV v0.3.0 &bull; Concurso de Ascenso Magisterial 2026 &bull; Operador Tecnológico
         </div>
       </footer>
     </div>

@@ -60,7 +60,8 @@ El proyecto se gestiona mediante metodología **Scrum**:
 - [x] **Sprint 1 — Identidad y carga documental básica**: Modelo de datos de postulantes y documentos en SQLite, autenticación con JWT/Bcrypt, endpoint `POST /documentos/:slot` con validación estricta de PDF vertical A4, y pantalla "Mi expediente" con los 8 slots del checklist (A a H).
 - [x] **Sprint 2 — Foliado digital y declaración jurada**: Unificación de expediente en PDF con `pdf-lib`, foliado electrónico en cada hoja (`Folio k de N`), estampa de Código de Verificación Digital (CVD - SHA256) en pie de página y flujo de Declaración Jurada Digital (Art. 49 TUO Ley 27444) con auditoría de IP y timestamp.
 
-- [ ] **Sprint 3 — Panel del evaluador**: Vista de revisión de expediente para recepcionistas con marcado de cumple/no cumple por rubro y generación de actas.
+- [x] **Sprint 3 — Panel del evaluador y generación de acta**: Roles JWT (`POSTULANTE` y `EVALUADOR`), bandeja de recepción de expedientes, calificación por rubros A-H del perfil Operador Tecnológico, cálculo automático de dictamen `APTO` / `NO APTO` y generación en PDF del **Acta de Evaluación Documental** oficial con `pdf-lib`.
+
 - [ ] **Sprint 4 — Seguridad, almacenamiento institucional y reportería**: Cifrado en reposo, backups automáticos y tablero estadístico de impacto/ahorro de papel.
 
 ---

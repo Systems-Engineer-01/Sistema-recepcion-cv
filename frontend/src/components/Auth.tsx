@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IdCard, Lock, User as UserIcon, Mail, ArrowRight, ShieldCheck, FileCheck2, UserPlus, LogIn } from 'lucide-react';
+import { IdCard, Lock, User as UserIcon, Mail, ArrowRight, ShieldCheck, FileCheck2, UserPlus, LogIn, UserCheck } from 'lucide-react';
 import { api, setToken, User } from '../services/api';
 
 interface AuthProps {
@@ -57,13 +57,19 @@ export const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
     }
   };
 
+  const fillEvaluadorDemo = () => {
+    setActiveTab('login');
+    setDni('99999999');
+    setPassword('evaluador2026');
+  };
+
   return (
     <div className="glass-card">
       {/* Header */}
       <div className="card-header">
-        <h1 className="card-title">Portal del Postulante</h1>
+        <h1 className="card-title">Portal de Acceso</h1>
         <p className="card-subtitle">
-          Sistema Integrado de Recepción Electrónica de CV (SIRE-CV)
+          Sistema Integrado de Recepción Electrónica (SIRE-CV)
         </p>
       </div>
 
@@ -130,7 +136,7 @@ export const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
           }}
         >
           <UserPlus size={16} />
-          <span>Registrarse</span>
+          <span>Registro Postulante</span>
         </button>
       </div>
 
@@ -193,7 +199,7 @@ export const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
           </div>
 
           <button type="submit" className="btn-primary" disabled={loading}>
-            <span>{loading ? 'Verificando...' : 'Ingresar a Mi Expediente'}</span>
+            <span>{loading ? 'Verificando...' : 'Ingresar al Sistema'}</span>
             <ArrowRight size={18} />
           </button>
         </form>
@@ -299,6 +305,34 @@ export const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
           </button>
         </form>
       )}
+
+      {/* Acceso directo Evaluador */}
+      <div style={{
+        marginTop: '1.25rem',
+        paddingTop: '1rem',
+        borderTop: '1px dashed rgba(255, 255, 255, 0.1)',
+        textAlign: 'center'
+      }}>
+        <button
+          type="button"
+          onClick={fillEvaluadorDemo}
+          style={{
+            background: 'rgba(30, 41, 59, 0.6)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            borderRadius: 'var(--radius-sm)',
+            color: 'var(--text-muted)',
+            padding: '0.4rem 0.75rem',
+            fontSize: '0.78rem',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem'
+          }}
+        >
+          <UserCheck size={14} style={{ color: 'var(--primary-light)' }} />
+          <span>Acceso Evaluador (DNI: 99999999)</span>
+        </button>
+      </div>
 
       <div className="legal-notice">
         <ShieldCheck size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />

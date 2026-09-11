@@ -9,6 +9,7 @@ import { healthRouter } from './routes/health.js';
 import { authRouter } from './routes/auth.js';
 import { documentosRouter } from './routes/documentos.js';
 import { expedienteRouter } from './routes/expediente.js';
+import { evaluadorRouter } from './routes/evaluador.js';
 
 dotenv.config();
 
@@ -33,15 +34,17 @@ app.use('/', healthRouter);
 app.use('/auth', authRouter);
 app.use('/documentos', documentosRouter);
 app.use('/expediente', expedienteRouter);
+app.use('/evaluador', evaluadorRouter);
 
 // Ruta raíz
 app.get('/', (req: Request, res: Response) => {
   res.json({
-    message: 'SIRE-CV API Server - Sprint 2 (Foliado y Declaración Jurada)',
+    message: 'SIRE-CV API Server - Sprint 3 (Panel Evaluador y Acta)',
     health: '/health',
     auth: '/auth',
     documentos: '/documentos',
     expediente: '/expediente',
+    evaluador: '/evaluador',
   });
 });
 
@@ -50,7 +53,7 @@ initDb()
   .then(() => {
     app.listen(PORT, () => {
       console.log(`[SIRE-CV Backend] Servidor ejecutándose en http://localhost:${PORT}`);
-      console.log(`[SIRE-CV Backend] Base de datos SQLite lista.`);
+      console.log(`[SIRE-CV Backend] Base de datos SQLite lista con semilleros.`);
     });
   })
   .catch((err) => {

@@ -35,10 +35,11 @@ authRouter.post('/registro', async (req: Request, res: Response): Promise<void> 
       }
 
       const password_hash = await bcrypt.hash(password, 10);
+      const rol = 'POSTULANTE';
 
       db.run(
-        `INSERT INTO postulantes (dni, nombres, apellidos, email, password_hash) VALUES (?, ?, ?, ?, ?)`,
-        [dni, nombres, apellidos, email, password_hash],
+        `INSERT INTO postulantes (dni, nombres, apellidos, email, password_hash, rol) VALUES (?, ?, ?, ?, ?, ?)`,
+        [dni, nombres, apellidos, email, password_hash, rol],
         function (insertErr) {
           if (insertErr) {
             res.status(500).json({ error: 'Error al registrar el postulante.' });
@@ -46,7 +47,7 @@ authRouter.post('/registro', async (req: Request, res: Response): Promise<void> 
           }
 
           const newId = this.lastID;
-          const userPayload = { id: newId, dni, nombres, apellidos, email };
+          const userPayload = { id: newId, dni, nombres, apellidos, email, rol };
           const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '24h' });
 
           res.status(201).json({
@@ -95,6 +96,7 @@ authRouter.post('/login', async (req: Request, res: Response): Promise<void> => 
         nombres: row.nombres,
         apellidos: row.apellidos,
         email: row.email,
+        rol: row.rol || 'POSTULANTE',
       };
 
       const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '24h' });
@@ -117,7 +119,7 @@ authRouter.get('/me', authMiddleware, (req: AuthRequest, res: Response): void =>
   }
 
   db.get(
-    'SELECT id, dni, nombres, apellidos, email, creado_en FROM postulantes WHERE id = ?',
+    'SELECT id, dni, nombres, apellidos, email, rol, creado_en FROM postulantes WHERE id = ?',
     [req.user.id],
     (err, row) => {
       if (err || !row) {
