@@ -113,3 +113,8 @@ Dado que el servidor local no cuenta con una IP pública estática, se integra *
   *Tanto el Evaluador como el propio Postulante pueden descargar y verificar su Acta de Evaluación desde el sistema una vez emitido el dictamen.*
 - **¿Dónde se guardan los archivos subidos?**
   *Se almacenan en disco local en la carpeta configurable `STORAGE_PATH`, cifrados con AES-256 en reposo, garantizando el cumplimiento de la Ley 29733.*
+
+## 13. Referencias y Citación
+Si deseas referenciar este sistema de software en documentos académicos, informes técnicos o tesis bajo el formato **IEEE**, utiliza la siguiente estructura de citación:
+
+> [1] E. L. Nazario Roa, "Sistema-recepcion-cv (SIRE-CV) - Sistema Integrado de Recepción Electrónica", GitHub repository, 2026. [Online]. Available: https://github.com/Systems-Engineer-01/Sistema-recepcion-cv
