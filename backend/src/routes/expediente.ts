@@ -33,7 +33,40 @@ expedienteRouter.get('/', authMiddleware, (req: AuthRequest, res: Response): voi
         return;
       }
 
-      res.status(200).json({ expediente: row });
+      db.get(
+        'SELECT id, resultado_final, observacion_general, evaluado_en FROM evaluaciones WHERE expediente_id = ? ORDER BY evaluado_en DESC LIMIT 1',
+        [row.id],
+        (errEval, evRow: any) => {
+          if (!evRow) {
+            res.status(200).json({
+              expediente: {
+                ...row,
+                resultado_final: null,
+                observacion_general: null,
+                evaluado_en: null,
+                detalles: []
+              },
+            });
+            return;
+          }
+
+          db.all(
+            'SELECT ed.rubro_id, ed.cumple, ed.observacion, r.criterio, r.slot_requerido FROM evaluacion_detalles ed JOIN rubros r ON ed.rubro_id = r.id WHERE ed.evaluacion_id = ?',
+            [evRow.id],
+            (errDet, detRows: any[]) => {
+              res.status(200).json({
+                expediente: {
+                  ...row,
+                  resultado_final: evRow.resultado_final,
+                  observacion_general: evRow.observacion_general,
+                  evaluado_en: evRow.evaluado_en,
+                  detalles: detRows || []
+                },
+              });
+            }
+          );
+        }
+      );
     }
   );
 });

@@ -19,6 +19,9 @@ import { logAudit } from './utils/auditLogger.js';
 dotenv.config();
 
 const app = express();
+
+// Confiar en el proxy de ngrok
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 4000;
 
 app.use(helmet({
@@ -84,10 +87,22 @@ app.get('/', (req: Request, res: Response) => {
 // Inicializar BD e Iniciar servidor
 initDb()
   .then(() => {
-    app.listen(PORT, () => {
-      console.log(`[SIRE-CV Backend] Servidor ejecutándose en http://localhost:${PORT}`);
+    const server = app.listen(PORT, () => {
+      console.log(`\n[SIRE-CV Backend] Servidor ejecutándose en http://localhost:${PORT}`);
       console.log(`[SIRE-CV Backend] Almacenamiento local seguro: ${getStorageDir()} (Cifrado AES-256 en reposo)`);
-      console.log(`[SIRE-CV Backend] Cumplimiento de la Ley 29733 (Sin almacenamiento en nubes públicas).`);
+      console.log(`[SIRE-CV Backend] Cumplimiento de la Ley 29733 (Sin almacenamiento en nubes públicas).\n`);
+    });
+
+    // Manejo de errores a nivel del servidor (ej. puerto ocupado)
+    server.on('error', (error: NodeJS.ErrnoException) => {
+      if (error.code === 'EADDRINUSE') {
+        console.error(`\n[Error Crítico] 🛑 El puerto ${PORT} ya está en uso.`);
+        console.error(`[Solución] Es probable que el backend ya esté corriendo en otra terminal o en segundo plano.`);
+        console.error(`Por favor, cierra el proceso anterior antes de iniciar uno nuevo.\n`);
+      } else {
+        console.error('\n[Error Crítico] 🛑 Ocurrió un error inesperado al iniciar el servidor:', error);
+      }
+      process.exit(1);
     });
   })
   .catch((err) => {

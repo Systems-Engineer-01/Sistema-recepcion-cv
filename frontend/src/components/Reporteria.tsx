@@ -91,18 +91,31 @@ export const Reporteria: React.FC = () => {
   const imp = impacto?.impacto;
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 w-full max-w-[1000px] mx-auto">
       {/* Cabecera del Tablero */}
-      <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <div style={{
+        background: 'var(--bg-card)',
+        backdropFilter: 'blur(16px)',
+        border: '1px solid var(--border-card)',
+        borderRadius: 'var(--radius-lg)',
+        padding: '1.75rem',
+        marginBottom: '2rem',
+        boxShadow: 'var(--shadow-card)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '1rem'
+      }}>
         <div>
-          <div className="flex items-center gap-2 text-blue-300 text-sm font-semibold uppercase tracking-wider mb-2">
-            <Building2 className="w-4 h-4" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
+            <Building2 size={16} />
             <span>Sustento Cuantitativo & Gobernanza — INEI</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', color: '#fff', margin: 0 }}>
             Tablero de Reportería e Impacto Ambiental
           </h1>
-          <p className="text-blue-100 text-sm mt-1 max-w-2xl">
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginTop: '0.25rem', maxWidth: '600px' }}>
             Estadísticas consolidadas de la convocatoria, estado de dictámenes y estimación de ahorro ecológico y económico por digitalización.
           </p>
         </div>
@@ -136,73 +149,73 @@ export const Reporteria: React.FC = () => {
 
       {/* Bloque 1: Tarjetas de Resumen Cuantitativo de Postulantes */}
       <div>
-        <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <Users className="w-5 h-5 text-blue-600" />
+        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <Users className="w-5 h-5 text-blue-400" />
           <span>Resumen General de Postulantes y Expedientes</span>
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Postulantes</span>
+          <div className="bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50 shadow-sm flex flex-col justify-between transition-colors hover:border-blue-400/50">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Postulantes</span>
             <div className="flex items-baseline justify-between mt-2">
-              <span className="text-3xl font-extrabold text-slate-900">{resumen?.total_postulantes || 0}</span>
-              <Users className="w-6 h-6 text-blue-500 opacity-60" />
+              <span className="text-3xl font-extrabold text-white">{resumen?.total_postulantes || 0}</span>
+              <Users className="w-6 h-6 text-blue-400 opacity-60" />
             </div>
-            <span className="text-xs text-slate-400 mt-2">Registrados con DNI</span>
+            <span className="text-xs text-slate-500 mt-2">Registrados con DNI</span>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Expedientes Finalizados</span>
+          <div className="bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50 shadow-sm flex flex-col justify-between transition-colors hover:border-emerald-400/50">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Expedientes Finalizados</span>
             <div className="flex items-baseline justify-between mt-2">
-              <span className="text-3xl font-extrabold text-slate-900">{resumen?.expedientes_completos || 0}</span>
-              <CheckCircle2 className="w-6 h-6 text-emerald-500 opacity-60" />
+              <span className="text-3xl font-extrabold text-white">{resumen?.expedientes_completos || 0}</span>
+              <CheckCircle2 className="w-6 h-6 text-emerald-400 opacity-60" />
             </div>
-            <span className="text-xs text-slate-400 mt-2">Foliados y firmados digitalmente</span>
+            <span className="text-xs text-slate-500 mt-2">Foliados y firmados digitalmente</span>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pendientes de Evaluar</span>
+          <div className="bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50 shadow-sm flex flex-col justify-between transition-colors hover:border-amber-400/50">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pendientes de Evaluar</span>
             <div className="flex items-baseline justify-between mt-2">
-              <span className="text-3xl font-extrabold text-amber-600">{resumen?.pendientes_evaluar || 0}</span>
-              <Clock className="w-6 h-6 text-amber-500 opacity-60" />
+              <span className="text-3xl font-extrabold text-amber-400">{resumen?.pendientes_evaluar || 0}</span>
+              <Clock className="w-6 h-6 text-amber-400 opacity-60" />
             </div>
-            <span className="text-xs text-slate-400 mt-2">En bandeja de evaluación</span>
+            <span className="text-xs text-slate-500 mt-2">En bandeja de evaluación</span>
           </div>
 
-          <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-200 shadow-sm flex flex-col justify-between">
-            <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Aptos</span>
+          <div className="bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50 shadow-sm flex flex-col justify-between transition-colors hover:border-emerald-400/50">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Aptos</span>
             <div className="flex items-baseline justify-between mt-2">
-              <span className="text-3xl font-extrabold text-emerald-700">{resumen?.aptos || 0}</span>
-              <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+              <span className="text-3xl font-extrabold text-emerald-400">{resumen?.aptos || 0}</span>
+              <CheckCircle2 className="w-6 h-6 text-emerald-400" />
             </div>
-            <span className="text-xs text-emerald-600 mt-2">Cumplen perfil Operador Tecnológico</span>
+            <span className="text-xs text-slate-500 mt-2">Cumplen perfil Operador Tecnológico</span>
           </div>
 
-          <div className="bg-rose-50 p-5 rounded-2xl border border-rose-200 shadow-sm flex flex-col justify-between">
-            <span className="text-xs font-semibold text-rose-700 uppercase tracking-wider">No Aptos</span>
+          <div className="bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50 shadow-sm flex flex-col justify-between transition-colors hover:border-rose-400/50">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">No Aptos</span>
             <div className="flex items-baseline justify-between mt-2">
-              <span className="text-3xl font-extrabold text-rose-700">{resumen?.no_aptos || 0}</span>
-              <XCircle className="w-6 h-6 text-rose-600" />
+              <span className="text-3xl font-extrabold text-rose-400">{resumen?.no_aptos || 0}</span>
+              <XCircle className="w-6 h-6 text-rose-400" />
             </div>
-            <span className="text-xs text-rose-600 mt-2">Incumplen rubro obligatorio</span>
+            <span className="text-xs text-slate-500 mt-2">Incumplen rubro obligatorio</span>
           </div>
         </div>
       </div>
 
       {/* Bloque 2: Indicador de Almacenamiento Institucional y Seguridad Ley 29733 */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-start gap-4">
-          <div className="p-3 bg-blue-100 text-blue-700 rounded-xl">
+          <div className="p-3 bg-blue-900/50 text-blue-400 rounded-xl">
             <ShieldCheck className="w-8 h-8" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-900">Almacenamiento Local Institucional & Cifrado AES-256</h3>
-            <p className="text-sm text-slate-600 mt-1 max-w-3xl">
-              Conforme a la <strong>Ley N.º 29733 (Ley de Protección de Datos Personales del Perú)</strong>, ningún archivo PDF cargado ni documento consolidado es transmitido a nubes públicas (AWS S3, GCP Cloud Storage, etc.). Toda la información reside cifrada en reposo exclusivamente en el disco local del servidor institucional.
+            <h3 className="text-lg font-bold text-white">Almacenamiento Local Institucional & Cifrado AES-256</h3>
+            <p className="text-sm text-slate-400 mt-1 max-w-3xl">
+              Conforme a la <strong className="text-slate-300">Ley N.º 29733 (Ley de Protección de Datos Personales del Perú)</strong>, ningún archivo PDF cargado ni documento consolidado es transmitido a nubes públicas (AWS S3, GCP Cloud Storage, etc.). Toda la información reside cifrada en reposo exclusivamente en el disco local del servidor institucional.
             </p>
           </div>
         </div>
-        <div className="bg-slate-100 text-slate-700 text-xs font-mono font-semibold px-4 py-2 rounded-lg border border-slate-300 shrink-0">
+        <div className="bg-slate-900/50 text-slate-300 text-xs font-mono font-semibold px-4 py-2 rounded-lg border border-slate-700 shrink-0">
           AES-256-CBC | Local Disk Storage
         </div>
       </div>

@@ -29,6 +29,7 @@ export const EvaluadorDetalle: React.FC<EvaluadorDetalleProps> = ({ expedienteId
   const [cumpleMap, setCumpleMap] = useState<Record<number, boolean>>({});
   const [obsMap, setObsMap] = useState<Record<number, string>>({});
   const [observacionGeneral, setObservacionGeneral] = useState<string>('');
+  const [esObservado, setEsObservado] = useState<boolean>(false);
 
   const fetchDetalle = async () => {
     setLoading(true);
@@ -47,6 +48,7 @@ export const EvaluadorDetalle: React.FC<EvaluadorDetalleProps> = ({ expedienteId
           initialObs[d.rubro_id] = d.observacion || '';
         });
         setObservacionGeneral(res.evaluacion.observacion_general || '');
+        setEsObservado(res.evaluacion.resultado_final === 'OBSERVADO');
       } else {
         // Por defecto todos los rubros en true (Cumple)
         res.rubros.forEach((r) => {
@@ -119,12 +121,17 @@ export const EvaluadorDetalle: React.FC<EvaluadorDetalleProps> = ({ expedienteId
 
 
   // Calcular pre-dictamen en vivo
-  let dictamenEnVivo: 'APTO' | 'NO_APTO' = 'APTO';
-  rubros.forEach((r) => {
-    if (r.es_obligatorio === 1 && !cumpleMap[r.id]) {
-      dictamenEnVivo = 'NO_APTO';
-    }
-  });
+  let dictamenEnVivo: 'APTO' | 'NO_APTO' | 'OBSERVADO' = 'APTO';
+  
+  if (esObservado) {
+    dictamenEnVivo = 'OBSERVADO';
+  } else {
+    rubros.forEach((r) => {
+      if (r.es_obligatorio === 1 && !cumpleMap[r.id]) {
+        dictamenEnVivo = 'NO_APTO';
+      }
+    });
+  }
 
   return (
     <div style={{ maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
@@ -329,7 +336,31 @@ export const EvaluadorDetalle: React.FC<EvaluadorDetalleProps> = ({ expedienteId
             </p>
 
             <form onSubmit={handleSubmitEvaluacion}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{
+                background: 'rgba(234, 179, 8, 0.1)',
+                border: '1px solid rgba(234, 179, 8, 0.3)',
+                borderRadius: 'var(--radius-md)',
+                padding: '1rem',
+                marginBottom: '1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem'
+              }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', color: '#fef08a', fontSize: '0.875rem', fontWeight: 600 }}>
+                  <input
+                    type="checkbox"
+                    checked={esObservado}
+                    onChange={(e) => setEsObservado(e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: '#eab308' }}
+                  />
+                  Marcar expediente como OBSERVADO (Subsanación)
+                </label>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                  Permite al postulante corregir y reenviar. Desactiva los rubros.
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem', opacity: esObservado ? 0.5 : 1, pointerEvents: esObservado ? 'none' : 'auto' }}>
                 {rubros.map((r) => {
                   const isCumple = cumpleMap[r.id] ?? true;
 
@@ -426,8 +457,8 @@ export const EvaluadorDetalle: React.FC<EvaluadorDetalleProps> = ({ expedienteId
 
               {/* Dictamen En Vivo Preview Banner */}
               <div style={{
-                background: dictamenEnVivo === 'APTO' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                border: dictamenEnVivo === 'APTO' ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
+                background: dictamenEnVivo === 'APTO' ? 'rgba(34, 197, 94, 0.15)' : dictamenEnVivo === 'OBSERVADO' ? 'rgba(234, 179, 8, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                border: dictamenEnVivo === 'APTO' ? '1px solid rgba(34, 197, 94, 0.3)' : dictamenEnVivo === 'OBSERVADO' ? '1px solid rgba(234, 179, 8, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
                 borderRadius: 'var(--radius-md)',
                 padding: '0.85rem 1rem',
                 marginBottom: '1.25rem',
@@ -439,12 +470,12 @@ export const EvaluadorDetalle: React.FC<EvaluadorDetalleProps> = ({ expedienteId
                 <span style={{
                   fontSize: '0.95rem',
                   fontWeight: 700,
-                  color: dictamenEnVivo === 'APTO' ? '#4ade80' : '#fca5a5',
+                  color: dictamenEnVivo === 'APTO' ? '#4ade80' : dictamenEnVivo === 'OBSERVADO' ? '#fde047' : '#fca5a5',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.4rem'
                 }}>
-                  {dictamenEnVivo === 'APTO' ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
+                  {dictamenEnVivo === 'APTO' ? <CheckCircle2 size={16} /> : dictamenEnVivo === 'OBSERVADO' ? <Layers size={16} /> : <XCircle size={16} />}
                   POSTULANTE {dictamenEnVivo}
                 </span>
               </div>

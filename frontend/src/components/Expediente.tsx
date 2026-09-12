@@ -13,7 +13,9 @@ import {
   Download,
   Lock,
   Sparkles,
-  Layers
+  Layers,
+  XCircle,
+  CheckCircle
 } from 'lucide-react';
 import { api, Documento, ExpedienteStatus, User } from '../services/api';
 
@@ -144,6 +146,8 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
 
   const countCargados = Object.keys(documentos).length;
   const isFinalizado = expedienteStatus?.estado === 'FINALIZADO';
+  const isCorregido = expedienteStatus?.resultado_final === 'CORREGIDO';
+  const isObservado = expedienteStatus?.estado === 'OBSERVADO' && !isCorregido;
 
 
   const formatBytes = (bytes: number): string => {
@@ -213,7 +217,31 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
           gap: '0.3rem'
         }}>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Estado del Expediente</span>
-          {isFinalizado ? (
+          {isFinalizado && expedienteStatus?.resultado_final === 'APTO' ? (
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              color: '#4ade80',
+              fontWeight: 700,
+              fontSize: '0.9rem'
+            }}>
+              <CheckCircle size={16} />
+              POSTULANTE APTO
+            </span>
+          ) : isFinalizado && expedienteStatus?.resultado_final === 'NO_APTO' ? (
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              color: '#f87171',
+              fontWeight: 700,
+              fontSize: '0.9rem'
+            }}>
+              <XCircle size={16} />
+              POSTULANTE NO APTO
+            </span>
+          ) : isFinalizado ? (
             <span style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -224,6 +252,30 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
             }}>
               <Sparkles size={16} />
               FINALIZADO Y FOLIADO
+            </span>
+          ) : isObservado ? (
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              color: '#fde047',
+              fontWeight: 700,
+              fontSize: '0.9rem'
+            }}>
+              <AlertCircle size={16} />
+              OBSERVADO (Subsanación)
+            </span>
+          ) : isCorregido ? (
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              color: '#c084fc',
+              fontWeight: 700,
+              fontSize: '0.9rem'
+            }}>
+              <RefreshCw size={16} />
+              CORREGIDO
             </span>
           ) : (
             <span style={{
@@ -338,6 +390,120 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
         </div>
       )}
 
+      {/* OBSERVADO BANNER */}
+      {isObservado && (
+        <div style={{
+          background: 'rgba(234, 179, 8, 0.15)',
+          border: '1px solid rgba(234, 179, 8, 0.4)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '1.5rem',
+          marginBottom: '2rem',
+          boxShadow: '0 8px 32px rgba(234, 179, 8, 0.1)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#fde047', fontWeight: 700, fontSize: '1.15rem', marginBottom: '0.75rem' }}>
+            <AlertCircle size={24} />
+            <span>Expediente Observado - Subsanación Requerida</span>
+          </div>
+          <p style={{ fontSize: '0.9rem', color: '#fef08a', marginBottom: '1rem', lineHeight: '1.5' }}>
+            El comité evaluador ha revisado su expediente y ha determinado que requiere subsanación. Por favor, actualice los documentos indicados y vuelva a enviar su expediente.
+          </p>
+          <div style={{ background: 'rgba(0, 0, 0, 0.2)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(234, 179, 8, 0.2)' }}>
+            <div style={{ fontSize: '0.75rem', color: '#fca5a5', fontWeight: 600, marginBottom: '0.4rem' }}>MOTIVO DE LA OBSERVACIÓN:</div>
+            <div style={{ color: '#fff', fontSize: '0.9rem', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+              {expedienteStatus?.observacion_general || 'No se proporcionaron detalles generales.'}
+            </div>
+
+            {expedienteStatus?.detalles?.some(d => !d.cumple) && (
+              <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1rem' }}>
+                <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600, marginBottom: '0.5rem' }}>Documentos que requieren corrección o están observados:</div>
+                <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#cbd5e1', fontSize: '0.85rem', lineHeight: '1.6' }}>
+                  {expedienteStatus.detalles.filter(d => !d.cumple).map((det, idx) => (
+                    <li key={idx} style={{ marginBottom: '0.5rem' }}>
+                      <strong style={{ color: '#fef08a' }}>{det.criterio} (Anexo {det.slot_requerido}):</strong>
+                      <span style={{ display: 'block', color: '#fca5a5', marginTop: '0.2rem' }}>{det.observacion ? `- ${det.observacion}` : '- No cumple con los requisitos mínimos.'}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* APTO BANNER */}
+      {isFinalizado && expedienteStatus?.resultado_final === 'APTO' && (
+        <div style={{
+          background: 'rgba(34, 197, 94, 0.15)',
+          border: '1px solid rgba(34, 197, 94, 0.4)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '1.5rem',
+          marginBottom: '2rem',
+          boxShadow: '0 8px 32px rgba(34, 197, 94, 0.1)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4ade80', fontWeight: 700, fontSize: '1.15rem', marginBottom: '0.75rem' }}>
+            <CheckCircle size={24} />
+            <span>Resultado de Evaluación: POSTULANTE APTO</span>
+          </div>
+          <p style={{ fontSize: '0.9rem', color: '#86efac', margin: 0, lineHeight: '1.5' }}>
+            ¡Felicitaciones! Su expediente cumple con todos los requisitos del perfil de Operador Tecnológico y ha sido declarado APTO.
+          </p>
+          {expedienteStatus.observacion_general && (
+            <div style={{ background: 'rgba(0, 0, 0, 0.2)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(34, 197, 94, 0.2)', marginTop: '1rem' }}>
+              <div style={{ fontSize: '0.75rem', color: '#4ade80', fontWeight: 600, marginBottom: '0.4rem' }}>OBSERVACIONES DEL COMITÉ:</div>
+              <div style={{ color: '#fff', fontSize: '0.9rem', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+                {expedienteStatus.observacion_general}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* NO APTO BANNER */}
+      {isFinalizado && expedienteStatus?.resultado_final === 'NO_APTO' && (
+        <div style={{
+          background: 'rgba(239, 68, 68, 0.15)',
+          border: '1px solid rgba(239, 68, 68, 0.4)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '1.5rem',
+          marginBottom: '2rem',
+          boxShadow: '0 8px 32px rgba(239, 68, 68, 0.1)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#f87171', fontWeight: 700, fontSize: '1.15rem', marginBottom: '0.75rem' }}>
+            <XCircle size={24} />
+            <span>Resultado de Evaluación: POSTULANTE NO APTO</span>
+          </div>
+          <p style={{ fontSize: '0.9rem', color: '#fca5a5', marginBottom: '1rem', lineHeight: '1.5' }}>
+            El comité evaluador ha revisado su expediente y ha determinado que no cumple con los requisitos mínimos del perfil de Operador Tecnológico.
+          </p>
+          {(expedienteStatus.observacion_general || expedienteStatus?.detalles?.some(d => !d.cumple)) && (
+            <div style={{ background: 'rgba(0, 0, 0, 0.2)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+              {expedienteStatus.observacion_general && (
+                <>
+                  <div style={{ fontSize: '0.75rem', color: '#f87171', fontWeight: 600, marginBottom: '0.4rem' }}>MOTIVO DEL RECHAZO:</div>
+                  <div style={{ color: '#fff', fontSize: '0.9rem', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+                    {expedienteStatus.observacion_general}
+                  </div>
+                </>
+              )}
+
+              {expedienteStatus?.detalles?.some(d => !d.cumple) && (
+                <div style={{ marginTop: expedienteStatus.observacion_general ? '1rem' : '0', borderTop: expedienteStatus.observacion_general ? '1px solid rgba(255,255,255,0.1)' : 'none', paddingTop: expedienteStatus.observacion_general ? '1rem' : '0' }}>
+                  <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600, marginBottom: '0.5rem' }}>Criterios no cumplidos (Documentos rechazados):</div>
+                  <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#cbd5e1', fontSize: '0.85rem', lineHeight: '1.6' }}>
+                    {expedienteStatus.detalles.filter(d => !d.cumple).map((det, idx) => (
+                      <li key={idx} style={{ marginBottom: '0.5rem' }}>
+                        <strong style={{ color: '#fca5a5' }}>{det.criterio} (Anexo {det.slot_requerido}):</strong>
+                        <span style={{ display: 'block', color: '#f87171', marginTop: '0.2rem' }}>{det.observacion ? `- ${det.observacion}` : '- No cumple con los requisitos mínimos.'}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Header section */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
         <div>
@@ -425,16 +591,16 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.3rem',
-                      background: 'rgba(34, 197, 94, 0.15)',
-                      border: '1px solid rgba(34, 197, 94, 0.3)',
-                      color: '#4ade80',
+                      background: slotError ? 'rgba(168, 85, 247, 0.15)' : 'rgba(34, 197, 94, 0.15)',
+                      border: slotError ? '1px solid rgba(168, 85, 247, 0.3)' : '1px solid rgba(34, 197, 94, 0.3)',
+                      color: slotError ? '#c084fc' : '#4ade80',
                       fontSize: '0.72rem',
                       fontWeight: 600,
                       padding: '0.2rem 0.6rem',
                       borderRadius: '999px'
                     }}>
                       <CheckCircle2 size={12} />
-                      Cargado
+                      {slotError ? 'Corregido' : 'Cargado'}
                     </span>
                   ) : (
                     <span style={{
@@ -628,6 +794,11 @@ export const Expediente: React.FC<ExpedienteProps> = ({ user }) => {
               <>
                 <RefreshCw size={18} />
                 <span>Volver a Consolidar y Re-Foliar Expediente</span>
+              </>
+            ) : isObservado ? (
+              <>
+                <Upload size={18} />
+                <span>Volver a Enviar Expediente (Subsanación)</span>
               </>
             ) : (
               <>

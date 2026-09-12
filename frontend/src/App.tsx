@@ -92,7 +92,7 @@ export const App: React.FC = () => {
                   setSelectedExpedienteId(null);
                   setActiveTab('bandeja');
                 }}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
                   activeTab === 'bandeja' && !selectedExpedienteId
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
@@ -107,7 +107,7 @@ export const App: React.FC = () => {
                   setSelectedExpedienteId(null);
                   setActiveTab('reportes');
                 }}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
                   activeTab === 'reportes'
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
@@ -122,7 +122,7 @@ export const App: React.FC = () => {
                   setSelectedExpedienteId(null);
                   setActiveTab('seguridad');
                 }}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
                   activeTab === 'seguridad'
                     ? 'bg-indigo-600 text-white shadow-md'
                     : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
@@ -135,19 +135,16 @@ export const App: React.FC = () => {
           )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div className="header-status">
-              <span className="status-dot"></span>
-              <span>
-                {isEvaluador ? 'Panel Evaluador — Concurso 2026' : 'Postulante — Recepción CV'}
-              </span>
-            </div>
-
             {user && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  {isEvaluador && <UserCheck size={14} style={{ color: '#4ade80' }} />}
-                  {user.nombres} ({user.rol})
-                </span>
+                <div className="header-status" style={{ padding: '0.4rem 1rem' }}>
+                  <span className="status-dot"></span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-dim)' }}>
+                    {isEvaluador && <UserCheck size={14} style={{ color: '#4ade80' }} />}
+                    <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{user.nombres}</span>
+                    <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>({user.rol})</span>
+                  </span>
+                </div>
 
                 <button
                   onClick={handleLogout}
@@ -156,13 +153,20 @@ export const App: React.FC = () => {
                     border: '1px solid rgba(239, 68, 68, 0.3)',
                     color: '#fca5a5',
                     borderRadius: 'var(--radius-sm)',
-                    padding: '0.4rem 0.75rem',
+                    padding: '0.4rem 0.85rem',
                     fontSize: '0.8rem',
                     fontWeight: 600,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.35rem'
+                    gap: '0.4rem',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
                   }}
                 >
                   <LogOut size={14} />

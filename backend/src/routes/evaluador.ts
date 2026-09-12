@@ -133,8 +133,9 @@ evaluadorRouter.post('/expedientes/:id/evaluacion', authMiddleware, requireEvalu
   const expedienteId = parseInt(rawId, 10);
 
   const evaluadorId = req.user?.id;
-  const { observacionGeneral, detalles } = req.body as {
+  const { observacionGeneral, detalles, esObservado } = req.body as {
     observacionGeneral?: string;
+    esObservado?: boolean;
     detalles: Array<{ rubro_id: number; cumple: boolean; observacion?: string }>;
   };
 
@@ -152,13 +153,21 @@ evaluadorRouter.post('/expedientes/:id/evaluacion', authMiddleware, requireEvalu
 
     const mandatorySet = new Set(rubros.filter((r) => r.es_obligatorio === 1).map((r) => r.id));
 
-    // Determinar resultado final: NO APTO si algún rubro obligatorio no cumple
-    let resultadoFinal: 'APTO' | 'NO_APTO' = 'APTO';
+    // Determinar resultado final
+    let resultadoFinal: 'APTO' | 'NO_APTO' | 'OBSERVADO' = 'APTO';
 
-    for (const item of detalles) {
-      if (mandatorySet.has(item.rubro_id) && !item.cumple) {
-        resultadoFinal = 'NO_APTO';
-        break;
+    if (esObservado) {
+      if (!observacionGeneral || observacionGeneral.trim() === '') {
+        res.status(400).json({ error: 'Debe ingresar una observación general indicando el motivo de la subsanación.' });
+        return;
+      }
+      resultadoFinal = 'OBSERVADO';
+    } else {
+      for (const item of detalles) {
+        if (mandatorySet.has(item.rubro_id) && !item.cumple) {
+          resultadoFinal = 'NO_APTO';
+          break;
+        }
       }
     }
 
@@ -196,10 +205,16 @@ evaluadorRouter.post('/expedientes/:id/evaluacion', authMiddleware, requireEvalu
             });
             stmt.finalize(() => {
               logAudit(req, evaluadorId, req.user?.dni, 'EVALUACION_EXPEDIENTE', `Expediente ID: ${expedienteId}, Resultado: ${resultadoFinal}`);
-              res.status(200).json({
-                message: `Evaluación registrada correctamente. Resultado Final: ${resultadoFinal}`,
-                resultado_final: resultadoFinal,
-                evaluacion_id: evaluacionId,
+
+              const nuevoEstado = resultadoFinal === 'OBSERVADO' ? 'OBSERVADO' : 'FINALIZADO';
+              db.run('UPDATE expedientes SET estado = ? WHERE id = ?', [nuevoEstado, expedienteId], (updateErr) => {
+                if (updateErr) console.error('[DB Error] Actualizando estado expediente:', updateErr);
+                
+                res.status(200).json({
+                  message: `Evaluación registrada correctamente. Resultado Final: ${resultadoFinal}`,
+                  resultado_final: resultadoFinal,
+                  evaluacion_id: evaluacionId,
+                });
               });
             });
           });

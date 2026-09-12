@@ -99,6 +99,24 @@ declaración jurada" y push.
 
 ---
 
+## Sprint 5 — Integración Pública y Flujo de Subsanación (E8)
+**Objetivo:** Integrar un túnel seguro con `ngrok` para acceso público sin requerir de una IP estática, y permitir el estado "OBSERVADO" para que el postulante re-envíe documentos específicos sin reiniciar todo su expediente.
+
+Historias de usuario:
+- Como evaluador quiero marcar un expediente como OBSERVADO en lugar de rechazarlo inmediatamente, indicando qué está mal.
+- Como postulante quiero ver el motivo de observación y poder reemplazar únicamente el PDF incorrecto para luego re-enviar.
+- Como administrador del sistema quiero publicar el portal en internet a través de `ngrok` desde la intranet de la institución para que cualquier postulante acceda.
+
+**Prompt (resumen para Antigravity):**
+```text
+Añade el estado 'OBSERVADO' en la base de datos para los expedientes.
+Modifica la interfaz del evaluador para poder alternar el resultado final entre APTO, NO APTO y OBSERVADO, guardando la 'observacion_general'.
+Actualiza el frontend del postulante para que, si su expediente está en estado 'OBSERVADO', muestre un banner de alerta con el motivo y rehabilite el formulario de subida de archivos para que pueda corregir los documentos y volver a consolidar el PDF.
+Documentar en el Manual el uso de ngrok para exponer el puerto 4000 a internet.
+```
+
+---
+
 ## Definición de "Terminado" (Definition of Done) por sprint
 1. Código con `npm test` en verde (si aplica).
 2. Commit descriptivo + push al repositorio.

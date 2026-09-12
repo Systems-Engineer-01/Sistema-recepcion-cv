@@ -21,7 +21,7 @@ export interface Documento {
 export interface ExpedienteStatus {
   id?: number;
   postulante_id?: number;
-  estado: 'EN_PROCESO' | 'FINALIZADO';
+  estado: 'EN_PROCESO' | 'FINALIZADO' | 'OBSERVADO';
   pdf_consolidado_url?: string;
   hash_cvd?: string;
   short_hash_cvd?: string;
@@ -30,6 +30,16 @@ export interface ExpedienteStatus {
   declaracion_ip?: string;
   declaracion_fecha?: string;
   finalizado_en?: string;
+  observacion_general?: string;
+  resultado_final?: 'APTO' | 'NO_APTO' | 'OBSERVADO' | 'CORREGIDO';
+  evaluado_en?: string;
+  detalles?: Array<{
+    rubro_id: number;
+    cumple: boolean;
+    observacion: string;
+    criterio: string;
+    slot_requerido: string;
+  }>;
 }
 
 export interface ExpedienteResumenEvaluador {
@@ -45,7 +55,7 @@ export interface ExpedienteResumenEvaluador {
   total_paginas: number;
   finalizado_en: string;
   evaluacion_id?: number;
-  resultado_final?: 'APTO' | 'NO_APTO';
+  resultado_final?: 'APTO' | 'NO_APTO' | 'OBSERVADO' | 'CORREGIDO';
   evaluado_en?: string;
 }
 
@@ -60,7 +70,7 @@ export interface Rubro {
 
 export interface EvaluacionExistente {
   id: number;
-  resultado_final: 'APTO' | 'NO_APTO';
+  resultado_final: 'APTO' | 'NO_APTO' | 'OBSERVADO' | 'CORREGIDO';
   observacion_general?: string;
   evaluado_en: string;
   detalles: Array<{

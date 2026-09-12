@@ -129,7 +129,15 @@ documentosRouter.post(
         fs.writeFileSync(targetPath, encryptedData);
 
         const relativeUrl = `/uploads/postulante_${postulanteId}/${safeFilename}`;
-        const nombreOriginal = req.file.originalname;
+        
+        // Corregir codificación de caracteres especiales (Ñ, tildes) que Multer procesa como latin1
+        let nombreOriginal = req.file.originalname;
+        try {
+          nombreOriginal = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+        } catch (e) {
+          console.warn('[Warning] No se pudo decodificar el nombre original del archivo:', e);
+        }
+
         const tamanoBytes = req.file.size;
 
         // Registrar auditoría de subida
@@ -152,11 +160,24 @@ documentosRouter.post(
               return;
             }
 
-            res.status(200).json({
-              message: `Documento para el slot ${slotParam} subido, cifrado (AES-256) y verificado correctamente.`,
-              documento: {
-                id: this.lastID,
-                slot: slotParam,
+            // Check if the current evaluation is OBSERVADO, if so, mark it as CORREGIDO so the evaluator knows it was updated
+            db.run(
+              `UPDATE evaluaciones 
+               SET resultado_final = 'CORREGIDO', evaluado_en = CURRENT_TIMESTAMP
+               WHERE resultado_final = 'OBSERVADO' 
+                 AND expediente_id = (SELECT id FROM expedientes WHERE postulante_id = ?)`,
+              [postulanteId],
+              (updateErr) => {
+                if (updateErr) {
+                  console.error('[DB Error] Actualizando estado a CORREGIDO:', updateErr);
+                  // We continue because the file was still uploaded successfully
+                }
+
+                res.status(200).json({
+                  message: `Documento para el slot ${slotParam} subido, cifrado (AES-256) y verificado correctamente.`,
+                  documento: {
+                    id: this.lastID,
+                    slot: slotParam,
                 archivo_url: relativeUrl,
                 nombre_original: nombreOriginal,
                 tamano_bytes: tamanoBytes,
@@ -171,7 +192,9 @@ documentosRouter.post(
             });
           }
         );
-      } catch (fileErr: any) {
+      }
+    );
+  } catch (fileErr: any) {
         console.error('[File Error] Guardando archivo:', fileErr);
         res.status(500).json({ error: 'Error al guardar el archivo cifrado en el servidor local.' });
       }
