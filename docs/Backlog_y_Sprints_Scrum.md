@@ -1,6 +1,6 @@
 # Backlog de Producto y Plan de Sprints — SIRE-CV
 
-**Product Owner:** (tú) · **Scrum Master / Gestor de Proyecto:** Claude · **Equipo de desarrollo:** Antigravity + Gemini 3 Pro (High)
+**Product Owner | Scrum Master / Gestor de Proyecto | Equipo de desarrollo:** Edinson Leonardo Nazario Roa
 **Duración de sprint sugerida:** 2–3 días (dado el plazo de entrega de documentos: 27/ago–14/set/2026)
 **Regla de cierre de sprint:** ningún sprint se da por cerrado sin `git commit` + `git push` al repositorio y sin actualizar `docs/Manual_de_Usuario.md` con lo que ya es usable.
 
