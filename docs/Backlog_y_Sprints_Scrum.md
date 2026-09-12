@@ -36,7 +36,7 @@ Reemplazar el flujo físico (folder manila, firma y foliado manual, entrega pres
 **Objetivo:** un postulante puede registrarse, iniciar sesión y subir cada uno de los 8 documentos del checklist (A–H) en su propio slot.
 
 Historias de usuario:
-- Como postulante quiero registrarme con mi DNI para que el sistema me identifique de forma única.
+- Como postulante quiero registrarse con mi DNI para que el sistema me identifique de forma única.
 - Como postulante quiero ver los 8 slots (A. Ficha de Inscripción … H. Otros documentos) para saber qué me falta subir.
 - Como postulante quiero que el sistema rechace archivos que no sean PDF vertical A4 para no repetir el error físico de "otra forma de impresión".
 
