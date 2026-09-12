@@ -29,22 +29,8 @@ Reemplazar el flujo físico (folder manila, firma y foliado manual, entrega pres
 - [x] Crear repositorio en GitHub (`sire-cv`) con estructura `backend/ frontend/ docs/`.
 - [x] Redactar sustento legal (`docs/Sustento_Legal_y_Propuesta.docx`).
 - [x] Redactar este backlog.
-- [ ] Definir stack técnico definitivo (sugerido: Node.js/Express + PostgreSQL o SQLite para el piloto; React/Vite en frontend; almacenamiento de archivos en disco cifrado del servidor local — nada de nube pública, por dato sensible DNI).
-- [ ] Push inicial a GitHub.
-
-**Prompt para Antigravity/Gemini 3 Pro (High) — Sprint 0:**
-```
-Actúa como ingeniero de software senior. Crea el andamiaje inicial de un
-monorepo llamado sire-cv con carpetas backend/ (Node.js + Express + TypeScript)
-y frontend/ (React + Vite + TypeScript). El backend debe exponer un endpoint
-de salud GET /health. El frontend debe tener una pantalla de login vacía.
-No implementes lógica de negocio todavía. Incluye README de cada carpeta
-explicando cómo correr `npm install` y `npm run dev`. Al terminar, deja el
-proyecto listo para `git add . && git commit -m "sprint0: fundación del
-proyecto"`.
-```
-
----
+- [x] Definir stack técnico definitivo (sugerido: Node.js/Express + PostgreSQL o SQLite para el piloto; React/Vite en frontend; almacenamiento de archivos en disco cifrado del servidor local — nada de nube pública, por dato sensible DNI).
+- [x] Push inicial a GitHub.
 
 ## Sprint 1 — Identidad y carga documental básica (E1 + E2)
 **Objetivo:** un postulante puede registrarse, iniciar sesión y subir cada uno de los 8 documentos del checklist (A–H) en su propio slot.
@@ -54,41 +40,10 @@ Historias de usuario:
 - Como postulante quiero ver los 8 slots (A. Ficha de Inscripción … H. Otros documentos) para saber qué me falta subir.
 - Como postulante quiero que el sistema rechace archivos que no sean PDF vertical A4 para no repetir el error físico de "otra forma de impresión".
 
-**Prompt para Antigravity/Gemini 3 Pro (High) — Sprint 1:**
-```
-Sobre el repo sire-cv del sprint anterior, implementa:
-1. Backend: modelo Postulante (dni, nombres, apellidos, email, password_hash),
-   endpoints POST /auth/registro, POST /auth/login (JWT), y modelo Documento
-   con campos: postulante_id, slot (enum: FICHA_INSCRIPCION, DECLARACION_JURADA,
-   DNI, HOJA_VIDA, GRADO_TITULO, CONSTANCIA_TRABAJO, FICHA_SUNEDU, OTROS),
-   archivo_url, creado_en. Endpoint POST /documentos/:slot que reciba un PDF,
-   valide que sea PDF, tamaño <= 10MB, y que la primera página esté en
-   orientación vertical A4 (usar pdf-lib para leer dimensiones).
-2. Frontend: pantalla de login/registro y una pantalla "Mi expediente" con
-   los 8 slots listados en el orden A-H, cada uno con botón de subir/reemplazar
-   y un estado (pendiente/cargado).
-Al terminar: git commit -m "sprint1: identidad y carga documental por slot"
-y push a la rama main.
-```
-
 ---
 
 ## Sprint 2 — Foliado digital y declaración jurada (E3 + E4)
 **Objetivo:** cada expediente se folia automáticamente en el orden inverso que exige el comunicado (última hoja física = primer folio digital) y el postulante firma una declaración jurada digital.
-
-**Prompt (resumen para Antigravity):**
-```
-Añade al backend un job que, cuando el postulante marca su expediente como
-"completo", genere un PDF consolidado ordenando los documentos como
-Ficha de Inscripción (posición 1 desde adelante) ... Ficha SUNEDU (posición 1
-desde atrás), asigne folio "k/n" a cada documento y estampe un Código de
-Verificación Digital (hash SHA-256 + timestamp) en el pie de página de cada
-uno, replicando el numeral 6.3 del comunicado pero de forma automática.
-Agrega el flujo de Declaración Jurada: checkbox obligatorio con el texto del
-art. 49 del TUO de la Ley 27444, que registre IP, fecha/hora y hash del
-expediente al momento de la firma. git commit -m "sprint2: foliado digital y
-declaración jurada" y push.
-```
 
 ---
 
@@ -106,14 +61,6 @@ Historias de usuario:
 - Como evaluador quiero marcar un expediente como OBSERVADO en lugar de rechazarlo inmediatamente, indicando qué está mal.
 - Como postulante quiero ver el motivo de observación y poder reemplazar únicamente el PDF incorrecto para luego re-enviar.
 - Como administrador del sistema quiero publicar el portal en internet a través de `ngrok` desde la intranet de la institución para que cualquier postulante acceda.
-
-**Prompt (resumen para Antigravity):**
-```text
-Añade el estado 'OBSERVADO' en la base de datos para los expedientes.
-Modifica la interfaz del evaluador para poder alternar el resultado final entre APTO, NO APTO y OBSERVADO, guardando la 'observacion_general'.
-Actualiza el frontend del postulante para que, si su expediente está en estado 'OBSERVADO', muestre un banner de alerta con el motivo y rehabilite el formulario de subida de archivos para que pueda corregir los documentos y volver a consolidar el PDF.
-Documentar en el Manual el uso de ngrok para exponer el puerto 4000 a internet.
-```
 
 ---
 
